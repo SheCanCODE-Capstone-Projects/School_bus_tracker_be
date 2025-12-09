@@ -8,6 +8,7 @@ package org.example.school_bus_tracker_be.Dtos.auth;
  * Contains the generated JWT access token, its type (usually "Bearer"), the
  * expiration time in milliseconds, and the role of the authenticated user.
  */
+
 public class AuthResponse {
     private String accessToken;
     private String tokenType = "Bearer";

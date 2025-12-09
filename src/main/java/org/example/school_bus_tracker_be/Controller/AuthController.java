@@ -2,10 +2,10 @@
 package org.example.school_bus_tracker_be.Controller;
 
 import jakarta.validation.Valid;
-import org.example.school_bus_tracker_be.DTO.AuthResponse;
+import org.example.school_bus_tracker_be.Dtos.auth.AuthRequest;
+import org.example.school_bus_tracker_be.Dtos.auth.AuthResponse;
 import org.example.school_bus_tracker_be.DTO.DriverRegisterRequest;
 import org.example.school_bus_tracker_be.DTO.ParentRegisterRequest;
-import org.example.school_bus_tracker_be.Dtos.auth.AuthRequest;
 import org.example.school_bus_tracker_be.Service.AuthService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +19,11 @@ public class AuthController {
 
     public AuthController(AuthService authService) {
         this.authService = authService;
+    }
+
+    @GetMapping
+    public ResponseEntity<?> getAuthResponse() {
+        return ResponseEntity.ok("Authentication endpoint is working");
     }
 
     @PostMapping("/register/driver")
@@ -39,9 +44,9 @@ public class AuthController {
      * @param request the login request containing email and password
      * @return a response entity containing the authentication response
      */
-//     @PostMapping("/login")
-//     public ResponseEntity<AuthResponse> login(@RequestBody @Valid AuthRequest request) {
-//         AuthResponse response = authService.login(request);
-//         return ResponseEntity.ok(response);
-// }
+     @PostMapping("/login")
+     public ResponseEntity<AuthResponse> login(@RequestBody @Valid AuthRequest request) {
+         AuthResponse response = authService.login(request);
+         return ResponseEntity.ok(response);
+ }
 }

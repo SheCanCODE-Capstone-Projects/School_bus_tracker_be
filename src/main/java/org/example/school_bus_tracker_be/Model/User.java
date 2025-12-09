@@ -86,9 +86,37 @@ public class User {
     }
 
     // Role Enum
+    /**
+     * The different roles a user in the system can have.
+     *
+     * <p>
+     * Spring Security expects roles to be prefixed with {@code ROLE_} when
+     * constructing {@link org.springframework.security.core.GrantedAuthority}
+     * instances. When building authentication tokens in the {@code JwtTokenProvider}
+     * we therefore prefix each enum name with {@code ROLE_}. Adding new roles here
+     * automatically exposes them for use in the security configuration.
+     * </p>
+     */
     public enum Role {
+        /**
+         * A user that can administer the entire system. Administrators can manage
+         * drivers, parents and buses.
+         */
         ADMIN,
+        /**
+         * A user that is registered as a driver. Drivers can update bus
+         * locations and trigger emergencies.
+         */
         DRIVER,
+        /**
+         * A user that is registered as a parent. Parents can register their
+         * children and subscribe to bus notifications.
+         */
+        PARENT,
+        /**
+         * A user that is registered as a student. Students are primarily used
+         * internally and do not authenticate directly.
+         */
         STUDENT
     }
 

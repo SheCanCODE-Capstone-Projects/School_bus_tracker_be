@@ -1,22 +1,5 @@
 package org.example.school_bus_tracker_be.Service;
 
-<<<<<<< HEAD
-import org.example.school_bus_tracker_be.Dtos.auth.AuthRequest;
-import org.example.school_bus_tracker_be.Dtos.auth.AuthResponse;
-
-/**
- * Service responsible for handling authentication logic.
- */
-public interface AuthService {
-
-    /**
-     * Authenticate the user with the provided credentials.
-     *
-     * @param request the login request containing the email and password
-     * @return an authentication response containing a JWT token and metadata
-     */
-    AuthResponse login(AuthRequest request);
-=======
 import org.example.school_bus_tracker_be.DTO.AuthResponse;
 import org.example.school_bus_tracker_be.DTO.DriverRegisterRequest;
 import org.example.school_bus_tracker_be.DTO.ParentRegisterRequest;
@@ -91,5 +74,4 @@ public class AuthService {
             throw new RuntimeException("Phone number already exists");
         }
     }
->>>>>>> 9bceed13dfbc78d051061dcf9ea6a75fc3d056f1
 }

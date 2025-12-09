@@ -105,7 +105,6 @@ public class User {
          * locations and trigger emergencies.
          */
         DRIVER,
-        PARENT,
         /**
          * A user that is registered as a parent. Parents can register their
          * children and subscribe to bus notifications.

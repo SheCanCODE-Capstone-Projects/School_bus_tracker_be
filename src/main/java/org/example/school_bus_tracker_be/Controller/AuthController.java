@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 import org.example.school_bus_tracker_be.DTO.AuthResponse;
 import org.example.school_bus_tracker_be.DTO.DriverRegisterRequest;
 import org.example.school_bus_tracker_be.DTO.ParentRegisterRequest;
+import org.example.school_bus_tracker_be.Dtos.auth.AuthRequest;
 import org.example.school_bus_tracker_be.Service.AuthService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
-    
+
 
     private final AuthService authService;
 
@@ -38,8 +39,9 @@ public class AuthController {
      * @param request the login request containing email and password
      * @return a response entity containing the authentication response
      */
-    @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody @Valid AuthRequest request) {
-        AuthResponse response = authService.login(request);
-        return ResponseEntity.ok(response);
+//     @PostMapping("/login")
+//     public ResponseEntity<AuthResponse> login(@RequestBody @Valid AuthRequest request) {
+//         AuthResponse response = authService.login(request);
+//         return ResponseEntity.ok(response);
+// }
 }

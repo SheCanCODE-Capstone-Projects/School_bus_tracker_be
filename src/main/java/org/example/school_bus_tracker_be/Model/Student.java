@@ -1,7 +1,5 @@
 package org.example.school_bus_tracker_be.Model;
 
-
-
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -9,78 +7,53 @@ import java.time.LocalDateTime;
 @Table(name = "students")
 public class Student {
 
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "school_id", nullable = false)
+    private School school;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id", nullable = false)
+    private User parent;
+
     @Column(nullable = false)
     private String name;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "school_id", nullable = false)
-    private School school;  // Assuming you have a School entity
-
     @Column(nullable = false)
-    private Integer age;
+    private Integer grade;
 
-    @Column(length = 255)
-    private String address;
-
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-    }
+    public Student() {}
 
-// Getters and Setters
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public School getSchool() {
-        return school;
-    }
-
-    public void setSchool(School school) {
+    public Student(School school, User parent, String name, Integer grade) {
         this.school = school;
+        this.parent = parent;
+        this.name = name;
+        this.grade = grade;
     }
 
-    public Integer getAge() {
-        return age;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public void setAge(Integer age) {
-        this.age = age;
-    }
+    public School getSchool() { return school; }
+    public void setSchool(School school) { this.school = school; }
 
-    public String getAddress() {
-        return address;
-    }
+    public User getParent() { return parent; }
+    public void setParent(User parent) { this.parent = parent; }
 
-    public void setAddress(String address) {
-        this.address = address;
-    }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
+    public Integer getGrade() { return grade; }
+    public void setGrade(Integer grade) { this.grade = grade; }
 
+    public LocalDateTime getCreatedAt() { return createdAt; }
 
+    @PrePersist
+    protected void onCreate() { this.createdAt = LocalDateTime.now(); }
 }
-

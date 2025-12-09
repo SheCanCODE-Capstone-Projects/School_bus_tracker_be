@@ -4,7 +4,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class SchoolBusTrackerBeApplication {
+public class
+SchoolBusTrackerBeApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(SchoolBusTrackerBeApplication.class, args);

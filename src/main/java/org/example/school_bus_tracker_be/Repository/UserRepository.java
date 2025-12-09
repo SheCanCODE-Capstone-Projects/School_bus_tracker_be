@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
+<<<<<<< HEAD
 /**
  * Repository interface for {@link User} entities.
  *
@@ -24,4 +25,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @return an {@link Optional} containing the user if found, otherwise empty
      */
     Optional<User> findByEmail(String email);
+=======
+@Repository
+public interface UserRepository extends JpaRepository<User, Long> {
+    Optional<User> findByEmail(String email);
+    boolean existsByEmail(String email);
+    boolean existsByPhone(String phone);
+>>>>>>> 9bceed13dfbc78d051061dcf9ea6a75fc3d056f1
 }

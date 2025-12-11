@@ -1,5 +1,6 @@
 package org.example.school_bus_tracker_be.Model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -14,6 +15,7 @@ public class User {
     // Many users can belong to one school
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "school_id", nullable = false)
+    @JsonIgnore
     private School school;
 
     @Column(nullable = false)
@@ -28,6 +30,9 @@ public class User {
     @Column(nullable = false, unique = true)
     private String phone;
 
+    @Column(name = "home_address")
+    private String homeAddress;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
@@ -41,12 +46,13 @@ public class User {
     // Constructors
     public User() {}
 
-    public User(School school, String name, String email, String password, String phone, Role role) {
+    public User(School school, String name, String email, String password, String phone, String homeAddress, Role role) {
         this.school = school;
         this.name = name;
         this.email = email;
         this.password = password;
         this.phone = phone;
+        this.homeAddress = homeAddress;
         this.role = role;
     }
 
@@ -57,6 +63,7 @@ public class User {
     public String getEmail() { return email; }
     public String getPassword() { return password; }
     public String getPhone() { return phone; }
+    public String getHomeAddress() { return homeAddress; }
     public Role getRole() { return role; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
@@ -68,6 +75,7 @@ public class User {
     public void setEmail(String email) { this.email = email; }
     public void setPassword(String password) { this.password = password; }
     public void setPhone(String phone) { this.phone = phone; }
+    public void setHomeAddress(String homeAddress) { this.homeAddress = homeAddress; }
     public void setRole(Role role) { this.role = role; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }

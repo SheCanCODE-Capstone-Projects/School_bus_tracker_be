@@ -56,6 +56,15 @@ public class User {
         this.role = role;
     }
 
+    public User(School school, String name, String email, String password, String phone, Role role) {
+        this.school = school;
+        this.name = name;
+        this.email = email;
+        this.password = password;
+        this.phone = phone;
+        this.role = role;
+    }
+
     // Getters
     public Long getId() { return id; }
     public School getSchool() { return school; }

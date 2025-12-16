@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/admin")
+@RequestMapping("/api/user")
 public class AdminManagementController {
 
     private final AuthService authService;

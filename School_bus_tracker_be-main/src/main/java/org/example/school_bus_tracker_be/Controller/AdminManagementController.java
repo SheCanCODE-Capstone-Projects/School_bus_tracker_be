@@ -19,6 +19,10 @@ public class AdminManagementController {
         this.authService = authService;
     }
 
+    @GetMapping("/get")
+    public ResponseEntity<?>welcome(){
+        return ResponseEntity.ok("hello");
+    }
     @PostMapping("/create-admin")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> createAdmin(@Valid @RequestBody AdminRegisterRequest request) {

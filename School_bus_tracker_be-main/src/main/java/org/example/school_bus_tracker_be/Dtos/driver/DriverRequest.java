@@ -1,69 +1,55 @@
-package org.example.school_bus_tracker_be.DTO;
+package org.example.school_bus_tracker_be.Dtos.driver;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 
-public class AdminAddDriverRequest {
-
+@Schema(description = "Request to create or update a driver")
+public class DriverRequest {
+    
     @NotBlank(message = "Full name is required")
-    @JsonProperty("full_name")
+    @Schema(description = "Driver full name", example = "John Smith")
     private String fullName;
-
+    
     @NotBlank(message = "Email is required")
     @Email(message = "Email should be valid")
+    @Schema(description = "Driver email", example = "john.smith@example.com")
     private String email;
-
-    @NotBlank(message = "Password is required")
-    @Size(min = 6, message = "Password must be at least 6 characters")
-    private String password;
-
+    
     @NotBlank(message = "Phone number is required")
-    @JsonProperty("phone_number")
+    @Schema(description = "Driver phone number", example = "+1234567890")
     private String phoneNumber;
-
-    @JsonProperty("license_number")
+    
+    @NotBlank(message = "License number is required")
+    @Schema(description = "Driver license number", example = "DL123456789")
     private String licenseNumber;
-
-    @JsonProperty("school_id")
-    private Long schoolId;
-
-    @JsonProperty("assigned_bus_id")
+    
+    @Schema(description = "Assigned bus ID", example = "1")
     private Long assignedBusId;
-
-    // Constructors
-    public AdminAddDriverRequest() {}
-
-    public AdminAddDriverRequest(String fullName, String email, String password, String phoneNumber, String licenseNumber, Long schoolId, Long assignedBusId) {
+    
+    public DriverRequest() {}
+    
+    public DriverRequest(String fullName, String email, String phoneNumber, String licenseNumber, Long assignedBusId) {
         this.fullName = fullName;
         this.email = email;
-        this.password = password;
         this.phoneNumber = phoneNumber;
         this.licenseNumber = licenseNumber;
-        this.schoolId = schoolId;
         this.assignedBusId = assignedBusId;
     }
-
+    
     // Getters and Setters
     public String getFullName() { return fullName; }
     public void setFullName(String fullName) { this.fullName = fullName; }
-
+    
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
-
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
-
+    
     public String getPhoneNumber() { return phoneNumber; }
     public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
-
+    
     public String getLicenseNumber() { return licenseNumber; }
     public void setLicenseNumber(String licenseNumber) { this.licenseNumber = licenseNumber; }
-
-    public Long getSchoolId() { return schoolId; }
-    public void setSchoolId(Long schoolId) { this.schoolId = schoolId; }
-
+    
     public Long getAssignedBusId() { return assignedBusId; }
     public void setAssignedBusId(Long assignedBusId) { this.assignedBusId = assignedBusId; }
 }

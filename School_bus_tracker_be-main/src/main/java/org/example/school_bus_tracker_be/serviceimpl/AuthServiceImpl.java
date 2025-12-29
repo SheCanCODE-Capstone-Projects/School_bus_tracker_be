@@ -11,10 +11,17 @@ import org.example.school_bus_tracker_be.Dtos.auth.AuthResponse;
 import org.example.school_bus_tracker_be.Model.School;
 import org.example.school_bus_tracker_be.Model.User;
 import org.example.school_bus_tracker_be.Model.Student;
+import org.example.school_bus_tracker_be.Model.Driver;
+import org.example.school_bus_tracker_be.Model.Bus;
+import org.example.school_bus_tracker_be.Model.BusStop;
 import org.example.school_bus_tracker_be.Repository.SchoolRepository;
 import org.example.school_bus_tracker_be.Repository.UserRepository;
 import org.example.school_bus_tracker_be.Repository.StudentRepository;
+import org.example.school_bus_tracker_be.Repository.DriverRepository;
+import org.example.school_bus_tracker_be.Repository.BusRepository;
+import org.example.school_bus_tracker_be.Repository.BusStopRepository;
 import org.example.school_bus_tracker_be.Service.AuthService;
+import org.example.school_bus_tracker_be.Enum.Role;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -29,6 +36,9 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final SchoolRepository schoolRepository;
     private final StudentRepository studentRepository;
+    private final DriverRepository driverRepository;
+    private final BusRepository busRepository;
+    private final BusStopRepository busStopRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider tokenProvider;
 
@@ -37,6 +47,9 @@ public class AuthServiceImpl implements AuthService {
             UserRepository userRepository,
             SchoolRepository schoolRepository,
             StudentRepository studentRepository,
+            DriverRepository driverRepository,
+            BusRepository busRepository,
+            BusStopRepository busStopRepository,
             PasswordEncoder passwordEncoder,
             JwtTokenProvider tokenProvider) {
 
@@ -44,6 +57,9 @@ public class AuthServiceImpl implements AuthService {
         this.userRepository = userRepository;
         this.schoolRepository = schoolRepository;
         this.studentRepository = studentRepository;
+        this.driverRepository = driverRepository;
+        this.busRepository = busRepository;
+        this.busStopRepository = busStopRepository;
         this.passwordEncoder = passwordEncoder;
         this.tokenProvider = tokenProvider;
     }
@@ -76,7 +92,7 @@ public class AuthServiceImpl implements AuthService {
                 request.getEmail(),
                 passwordEncoder.encode(request.getPassword()),
                 request.getPhone(),
-                User.Role.DRIVER
+                Role.DRIVER
         );
 
         userRepository.save(driver);
@@ -99,7 +115,7 @@ public class AuthServiceImpl implements AuthService {
                 request.getEmail(),
                 passwordEncoder.encode(request.getPassword()),
                 request.getPhone(),
-                User.Role.PARENT
+                Role.PARENT
         );
 
         userRepository.save(parent);
@@ -122,7 +138,7 @@ public class AuthServiceImpl implements AuthService {
                 request.getEmail(),
                 passwordEncoder.encode(request.getPassword()),
                 request.getPhone(),
-                User.Role.ADMIN
+                Role.ADMIN
         );
 
         userRepository.save(admin);
@@ -137,22 +153,47 @@ public class AuthServiceImpl implements AuthService {
         User admin = userRepository.findById(adminId)
                 .orElseThrow(() -> new RuntimeException("Admin not found"));
         
-        if (!admin.getRole().equals(User.Role.ADMIN)) {
+        if (!admin.getRole().equals(Role.ADMIN)) {
             throw new RuntimeException("Only admins can add drivers");
         }
 
-        validateUser(request.getEmail(), request.getPhone());
+        validateUser(request.getEmail(), request.getPhoneNumber());
 
-        User driver = new User(
-                admin.getSchool(),
-                request.getName(),
+        School school = admin.getSchool();
+        if (request.getSchoolId() != null) {
+            school = schoolRepository.findById(request.getSchoolId())
+                    .orElseThrow(() -> new RuntimeException("School not found"));
+        }
+
+        User driverUser = new User(
+                school,
+                request.getFullName(),
                 request.getEmail(),
                 passwordEncoder.encode(request.getPassword()),
-                request.getPhone(),
-                User.Role.DRIVER
+                request.getPhoneNumber(),
+                Role.DRIVER
         );
 
-        return userRepository.save(driver);
+        userRepository.save(driverUser);
+        
+        // Also create Driver entity
+        Driver driver = new Driver(
+                school,
+                request.getFullName(),
+                request.getEmail(),
+                request.getPhoneNumber(),
+                request.getLicenseNumber() != null ? request.getLicenseNumber() : "DL" + System.currentTimeMillis()
+        );
+        
+        if (request.getAssignedBusId() != null) {
+            Bus bus = busRepository.findById(request.getAssignedBusId())
+                    .orElseThrow(() -> new RuntimeException("Bus not found"));
+            driver.setAssignedBus(bus);
+        }
+        
+        driverRepository.save(driver);
+
+        return driverUser;
     }
 
     // ADMIN ADD STUDENT
@@ -161,23 +202,38 @@ public class AuthServiceImpl implements AuthService {
         User admin = userRepository.findById(adminId)
                 .orElseThrow(() -> new RuntimeException("Admin not found"));
         
-        if (!admin.getRole().equals(User.Role.ADMIN)) {
+        if (!admin.getRole().equals(Role.ADMIN)) {
             throw new RuntimeException("Only admins can add students");
         }
 
-        User parent = userRepository.findById(request.getParentId())
-                .orElseThrow(() -> new RuntimeException("Parent not found"));
-        
-        if (!parent.getRole().equals(User.Role.PARENT)) {
-            throw new RuntimeException("Specified user is not a parent");
+        School school = admin.getSchool();
+        if (request.getSchoolId() != null) {
+            school = schoolRepository.findById(request.getSchoolId())
+                .orElseThrow(() -> new RuntimeException("School not found"));
         }
 
         Student student = new Student(
-                admin.getSchool(),
-                parent,
-                request.getStudentName(),
-                Integer.parseInt(request.getGrade())
+            school,
+            request.getStudentName(),
+            request.getAge(),
+            request.getParentName(),
+            request.getParentPhone(),
+            request.getAddress()
         );
+        
+        // Set bus stop if provided
+        if (request.getBusStopId() != null) {
+            BusStop busStop = busStopRepository.findById(request.getBusStopId())
+                .orElseThrow(() -> new RuntimeException("Bus stop not found"));
+            student.setBusStop(busStop);
+        }
+        
+        // Set assigned bus if provided
+        if (request.getAssignedBusId() != null) {
+            Bus bus = busRepository.findById(request.getAssignedBusId())
+                .orElseThrow(() -> new RuntimeException("Bus not found"));
+            student.setAssignedBus(bus);
+        }
 
         return studentRepository.save(student);
     }

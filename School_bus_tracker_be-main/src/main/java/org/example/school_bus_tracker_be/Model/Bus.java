@@ -19,15 +19,21 @@ public class Bus {
     @JoinColumn(name = "school_id", nullable = false)
     private School school;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "driver_id", nullable = false)
-    private User driver;
+    @Column(name = "bus_name", nullable = false)
+    private String busName;
 
     @Column(name = "bus_number", nullable = false, unique = true)
     private String busNumber;
 
-    @Column(name = "plate_number", nullable = false, unique = true)
-    private String plateNumber;
+    @Column(name = "capacity")
+    private Integer capacity;
+
+    @Column(name = "route")
+    private String route;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_driver_id")
+    private Driver assignedDriver;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -39,14 +45,18 @@ public class Bus {
     @OneToMany(mappedBy = "bus", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LocationPoint> locationPoints;
 
+    @OneToMany(mappedBy = "assignedBus", cascade = CascadeType.ALL)
+    private List<Student> students;
+
     // Constructors
     public Bus() {}
 
-    public Bus(School school, User driver, String busNumber, String plateNumber, Status status) {
+    public Bus(School school, String busName, String busNumber, Integer capacity, String route, Status status) {
         this.school = school;
-        this.driver = driver;
+        this.busName = busName;
         this.busNumber = busNumber;
-        this.plateNumber = plateNumber;
+        this.capacity = capacity;
+        this.route = route;
         this.status = status;
     }
 
@@ -57,14 +67,20 @@ public class Bus {
     public School getSchool() { return school; }
     public void setSchool(School school) { this.school = school; }
 
-    public User getDriver() { return driver; }
-    public void setDriver(User driver) { this.driver = driver; }
+    public String getBusName() { return busName; }
+    public void setBusName(String busName) { this.busName = busName; }
 
     public String getBusNumber() { return busNumber; }
     public void setBusNumber(String busNumber) { this.busNumber = busNumber; }
 
-    public String getPlateNumber() { return plateNumber; }
-    public void setPlateNumber(String plateNumber) { this.plateNumber = plateNumber; }
+    public Integer getCapacity() { return capacity; }
+    public void setCapacity(Integer capacity) { this.capacity = capacity; }
+
+    public String getRoute() { return route; }
+    public void setRoute(String route) { this.route = route; }
+
+    public Driver getAssignedDriver() { return assignedDriver; }
+    public void setAssignedDriver(Driver assignedDriver) { this.assignedDriver = assignedDriver; }
 
     public Status getStatus() { return status; }
     public void setStatus(Status status) { this.status = status; }
@@ -73,6 +89,9 @@ public class Bus {
 
     public List<LocationPoint> getLocationPoints() { return locationPoints; }
     public void setLocationPoints(List<LocationPoint> locationPoints) { this.locationPoints = locationPoints; }
+
+    public List<Student> getStudents() { return students; }
+    public void setStudents(List<Student> students) { this.students = students; }
 
     @PrePersist
     protected void onCreate() { this.createdAt = LocalDateTime.now(); }

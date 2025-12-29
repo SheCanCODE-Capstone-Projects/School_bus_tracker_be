@@ -4,8 +4,11 @@ package org.example.school_bus_tracker_be.Controller;
 import jakarta.validation.Valid;
 import org.example.school_bus_tracker_be.Dtos.auth.AuthRequest;
 import org.example.school_bus_tracker_be.Dtos.auth.AuthResponse;
+import org.example.school_bus_tracker_be.Dtos.auth.PasswordResetRequest;
+import org.example.school_bus_tracker_be.Dtos.auth.PasswordResetConfirmRequest;
 import org.example.school_bus_tracker_be.DTO.DriverRegisterRequest;
 import org.example.school_bus_tracker_be.DTO.ParentRegisterRequest;
+import org.example.school_bus_tracker_be.DTO.SimpleApiResponse;
 import org.example.school_bus_tracker_be.Service.AuthService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -49,4 +52,29 @@ public class AuthController {
          AuthResponse response = authService.login(request);
          return ResponseEntity.ok(response);
  }
+
+    /**
+     * Request password reset for a user by email.
+     * Sends a reset token to the user's email address.
+     *
+     * @param request the password reset request containing email
+     * @return a response entity indicating success
+     */
+    @PostMapping("/password-reset/request")
+    public ResponseEntity<SimpleApiResponse> requestPasswordReset(@RequestBody @Valid PasswordResetRequest request) {
+        authService.requestPasswordReset(request);
+        return ResponseEntity.ok(SimpleApiResponse.success("Password reset email sent successfully"));
+    }
+
+    /**
+     * Confirm password reset using the token and new password.
+     *
+     * @param request the password reset confirmation request
+     * @return a response entity indicating success
+     */
+    @PostMapping("/password-reset/confirm")
+    public ResponseEntity<SimpleApiResponse> confirmPasswordReset(@RequestBody @Valid PasswordResetConfirmRequest request) {
+        authService.confirmPasswordReset(request);
+        return ResponseEntity.ok(SimpleApiResponse.success("Password reset successfully"));
+    }
 }

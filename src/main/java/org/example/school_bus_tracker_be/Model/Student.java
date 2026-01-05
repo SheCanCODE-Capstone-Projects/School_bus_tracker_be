@@ -12,6 +12,8 @@ public class Student {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // ========================= RELATIONSHIPS =========================
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "school_id", nullable = false)
     @JsonIgnore
@@ -21,22 +23,21 @@ public class Student {
     @JoinColumn(name = "parent_id", nullable = false)
     @JsonIgnore
     private User parent;
-    @Column(name = "student_name", nullable = false)
-    private String studentName;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "bus_stop_id")
     @JsonIgnore
     private BusStop busStop;
 
-    @Column(nullable = false)
-    private Integer age;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_bus_id")
+    @JsonIgnore
+    private Bus assignedBus;
 
-    @Column(name = "parent_name", nullable = false)
-    private String parentName;
+    // ========================= STUDENT INFO =========================
 
-    @Column(name = "parent_phone", nullable = false)
-    private String parentPhone;
+    @Column(name = "student_name", nullable = false)
+    private String studentName;
 
     @Column(name = "student_number", nullable = false, unique = true)
     private String studentNumber;
@@ -45,71 +46,113 @@ public class Student {
     private Integer age;
 
     @Column(nullable = false)
-    private String address;
+    private Integer grade;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "bus_stop_id")
-    private BusStop busStop;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "assigned_bus_id")
-    private Bus assignedBus;
+    // ========================= METADATA =========================
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    // ========================= CONSTRUCTORS =========================
+
     public Student() {}
 
-    public Student(School school, String studentName, Integer age, String parentName, String parentPhone, String address) {
+    public Student(
+            School school,
+            User parent,
+            BusStop busStop,
+            String studentName,
+            String studentNumber,
+            Integer age,
+            Integer grade
+    ) {
         this.school = school;
+        this.parent = parent;
+        this.busStop = busStop;
         this.studentName = studentName;
+        this.studentNumber = studentNumber;
         this.age = age;
-        this.parentName = parentName;
-        this.parentPhone = parentPhone;
-        this.address = address;
+        this.grade = grade;
     }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    // ========================= GETTERS & SETTERS =========================
 
-    public School getSchool() { return school; }
-    public void setSchool(School school) { this.school = school; }
+    public Long getId() {
+        return id;
+    }
 
-    public String getStudentName() { return studentName; }
-    public void setStudentName(String studentName) { this.studentName = studentName; }
+    public School getSchool() {
+        return school;
+    }
 
-    public Integer getAge() { return age; }
-    public void setAge(Integer age) { this.age = age; }
+    public void setSchool(School school) {
+        this.school = school;
+    }
 
-    public String getParentName() { return parentName; }
-    public void setParentName(String parentName) { this.parentName = parentName; }
+    public User getParent() {
+        return parent;
+    }
 
-    public String getParentPhone() { return parentPhone; }
-    public void setParentPhone(String parentPhone) { this.parentPhone = parentPhone; }
+    public void setParent(User parent) {
+        this.parent = parent;
+    }
 
-    public String getAddress() { return address; }
-    public void setAddress(String address) { this.address = address; }
+    public BusStop getBusStop() {
+        return busStop;
+    }
 
-    public BusStop getBusStop() { return busStop; }
-    public void setBusStop(BusStop busStop) { this.busStop = busStop; }
+    public void setBusStop(BusStop busStop) {
+        this.busStop = busStop;
+    }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public Bus getAssignedBus() {
+        return assignedBus;
+    }
 
-    public String getStudentNumber() { return studentNumber; }
-    public void setStudentNumber(String studentNumber) { this.studentNumber = studentNumber; }
+    public void setAssignedBus(Bus assignedBus) {
+        this.assignedBus = assignedBus;
+    }
 
-    public Integer getAge() { return age; }
-    public void setAge(Integer age) { this.age = age; }
+    public String getStudentName() {
+        return studentName;
+    }
 
-    public Integer getGrade() { return grade; }
-    public void setGrade(Integer grade) { this.grade = grade; }
+    public void setStudentName(String studentName) {
+        this.studentName = studentName;
+    }
 
-    public Bus getAssignedBus() { return assignedBus; }
-    public void setAssignedBus(Bus assignedBus) { this.assignedBus = assignedBus; }
+    public String getStudentNumber() {
+        return studentNumber;
+    }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setStudentNumber(String studentNumber) {
+        this.studentNumber = studentNumber;
+    }
+
+    public Integer getAge() {
+        return age;
+    }
+
+    public void setAge(Integer age) {
+        this.age = age;
+    }
+
+    public Integer getGrade() {
+        return grade;
+    }
+
+    public void setGrade(Integer grade) {
+        this.grade = grade;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    // ========================= LIFECYCLE =========================
 
     @PrePersist
-    protected void onCreate() { this.createdAt = LocalDateTime.now(); }
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+    }
 }

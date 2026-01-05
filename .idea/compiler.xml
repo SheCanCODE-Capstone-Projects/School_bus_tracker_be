@@ -7,7 +7,7 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="School_bus_tracker_be (1)" />
-        <module name="School_bus_tracker_be" />
+        <module name="School_bus_tracker_be (2)" />
       </profile>
     </annotationProcessing>
   </component>
@@ -15,6 +15,7 @@
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="School_bus_tracker_be" options="-parameters" />
       <module name="School_bus_tracker_be (1)" options="-parameters" />
+      <module name="School_bus_tracker_be (2)" options="-parameters" />
     </option>
   </component>
 </project>

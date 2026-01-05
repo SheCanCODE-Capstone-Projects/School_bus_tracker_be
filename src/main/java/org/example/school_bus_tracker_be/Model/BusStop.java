@@ -1,5 +1,6 @@
 package org.example.school_bus_tracker_be.Model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -11,21 +12,30 @@ public class BusStop {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // ========================= RELATIONSHIPS =========================
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "school_id", nullable = false)
+    @JsonIgnore
     private School school;
+
+    // ========================= BUS STOP INFO =========================
 
     @Column(nullable = false)
     private String name;
 
     @Column(nullable = false)
-    private double longitude;
+    private Double latitude;
 
     @Column(nullable = false)
-    private double latitude;
+    private Double longitude;
+
+    // ========================= METADATA =========================
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    // ========================= CONSTRUCTORS =========================
 
     public BusStop() {}
 
@@ -36,31 +46,52 @@ public class BusStop {
         this.longitude = longitude;
     }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    // ========================= GETTERS & SETTERS =========================
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public Long getId() {
+        return id;
+    }
 
-    public double getLongitude() { return longitude; }
-    public void setLongitude(double longitude) { this.longitude = longitude; }
+    public School getSchool() {
+        return school;
+    }
 
-    public double getLatitude() { return latitude; }
-    public void setLatitude(double latitude) { this.latitude = latitude; }
-    public School getSchool() { return school; }
-    public void setSchool(School school) { this.school = school; }
+    public void setSchool(School school) {
+        this.school = school;
+    }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public String getName() {
+        return name;
+    }
 
-    public Double getLatitude() { return latitude; }
-    public void setLatitude(Double latitude) { this.latitude = latitude; }
+    public void setName(String name) {
+        this.name = name;
+    }
 
-    public Double getLongitude() { return longitude; }
-    public void setLongitude(Double longitude) { this.longitude = longitude; }
+    public Double getLatitude() {
+        return latitude;
+    }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    // ========================= LIFECYCLE =========================
 
     @PrePersist
-    protected void onCreate() { this.createdAt = LocalDateTime.now(); }
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+    }
 }

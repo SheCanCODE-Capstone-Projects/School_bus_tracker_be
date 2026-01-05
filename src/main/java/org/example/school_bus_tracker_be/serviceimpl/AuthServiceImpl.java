@@ -16,6 +16,7 @@ import org.example.school_bus_tracker_be.Repository.SchoolRepository;
 import org.example.school_bus_tracker_be.Repository.StudentRepository;
 import org.example.school_bus_tracker_be.Repository.UserRepository;
 import org.example.school_bus_tracker_be.Service.AuthService;
+import org.example.school_bus_tracker_be.Service.EmailService;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -34,6 +35,8 @@ public class AuthServiceImpl implements AuthService {
     private final BusStopRepository busStopRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider tokenProvider;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final EmailService emailService;
 
     public AuthServiceImpl(
             AuthenticationManager authenticationManager,
@@ -42,7 +45,9 @@ public class AuthServiceImpl implements AuthService {
             StudentRepository studentRepository,
             BusStopRepository busStopRepository,
             PasswordEncoder passwordEncoder,
-            JwtTokenProvider tokenProvider) {
+            JwtTokenProvider tokenProvider,
+            PasswordResetTokenRepository passwordResetTokenRepository,
+            EmailService emailService) {
 
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
@@ -51,6 +56,8 @@ public class AuthServiceImpl implements AuthService {
         this.busStopRepository = busStopRepository;
         this.passwordEncoder = passwordEncoder;
         this.tokenProvider = tokenProvider;
+        this.passwordResetTokenRepository = passwordResetTokenRepository;
+        this.emailService = emailService;
     }
 
     // LOGIN
@@ -149,5 +156,49 @@ public class AuthServiceImpl implements AuthService {
 
     private Integer calculateGrade(Integer age) {
         return Math.max(1, age - 5);
+    // PASSWORD RESET REQUEST
+    @Override
+    @Transactional
+    public void requestPasswordReset(PasswordResetRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + request.getEmail()));
+
+        // Delete any existing reset tokens for this user
+        passwordResetTokenRepository.deleteByUser(user);
+
+        // Generate new reset token
+        String token = UUID.randomUUID().toString();
+        LocalDateTime expiryDate = LocalDateTime.now().plusHours(1); // Token expires in 1 hour
+
+        PasswordResetToken resetToken = new PasswordResetToken(token, user, expiryDate);
+        passwordResetTokenRepository.save(resetToken);
+
+        // Send reset email
+        emailService.sendPasswordResetEmail(user.getEmail(), token);
+    }
+
+    // PASSWORD RESET CONFIRM
+    @Override
+    @Transactional
+    public void confirmPasswordReset(PasswordResetConfirmRequest request) {
+        PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(request.getToken())
+                .orElseThrow(() -> new RuntimeException("Invalid reset token"));
+
+        if (resetToken.isExpired()) {
+            throw new RuntimeException("Reset token has expired");
+        }
+
+        if (resetToken.isUsed()) {
+            throw new RuntimeException("Reset token has already been used");
+        }
+
+        // Update user password
+        User user = resetToken.getUser();
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        // Mark token as used
+        resetToken.setUsed(true);
+        passwordResetTokenRepository.save(resetToken);
     }
 }

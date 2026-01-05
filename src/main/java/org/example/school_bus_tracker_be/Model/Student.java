@@ -1,5 +1,6 @@
 package org.example.school_bus_tracker_be.Model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -13,10 +14,20 @@ public class Student {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "school_id", nullable = false)
+    @JsonIgnore
     private School school;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id", nullable = false)
+    @JsonIgnore
+    private User parent;
     @Column(name = "student_name", nullable = false)
     private String studentName;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "bus_stop_id")
+    @JsonIgnore
+    private BusStop busStop;
 
     @Column(nullable = false)
     private Integer age;
@@ -26,6 +37,12 @@ public class Student {
 
     @Column(name = "parent_phone", nullable = false)
     private String parentPhone;
+
+    @Column(name = "student_number", nullable = false, unique = true)
+    private String studentNumber;
+
+    @Column(nullable = false)
+    private Integer age;
 
     @Column(nullable = false)
     private String address;
@@ -75,6 +92,18 @@ public class Student {
 
     public BusStop getBusStop() { return busStop; }
     public void setBusStop(BusStop busStop) { this.busStop = busStop; }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public String getStudentNumber() { return studentNumber; }
+    public void setStudentNumber(String studentNumber) { this.studentNumber = studentNumber; }
+
+    public Integer getAge() { return age; }
+    public void setAge(Integer age) { this.age = age; }
+
+    public Integer getGrade() { return grade; }
+    public void setGrade(Integer grade) { this.grade = grade; }
 
     public Bus getAssignedBus() { return assignedBus; }
     public void setAssignedBus(Bus assignedBus) { this.assignedBus = assignedBus; }

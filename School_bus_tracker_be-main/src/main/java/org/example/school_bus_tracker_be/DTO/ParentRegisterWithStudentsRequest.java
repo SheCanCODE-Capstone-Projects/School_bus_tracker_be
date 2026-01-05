@@ -1,14 +1,12 @@
 package org.example.school_bus_tracker_be.DTO;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 
-public class ParentRegisterRequest {
-    
-    @NotNull
-    private Long schoolId;
+public class ParentRegisterWithStudentsRequest {
     
     @NotBlank
     private String name;
@@ -23,26 +21,28 @@ public class ParentRegisterRequest {
     @NotBlank
     private String phone;
     
-    @NotBlank
-    private String homeAddress;
-    
     @NotNull
-    private List<ChildInfo> children;
+    private String busStopId;
+    
+    @Valid
+    @NotNull
+    private List<StudentInfo> students;
 
-    public Long getSchoolId() { return schoolId; }
-    public void setSchoolId(Long schoolId) { this.schoolId = schoolId; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
+
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
+
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
+
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
 
-    public String getHomeAddress() { return homeAddress; }
-    public void setHomeAddress(String homeAddress) { this.homeAddress = homeAddress; }
+    public String getBusStopId() { return busStopId; }
+    public void setBusStopId(String busStopId) { this.busStopId = busStopId; }
 
-    public List<ChildInfo> getChildren() { return children; }
-    public void setChildren(List<ChildInfo> children) { this.children = children; }
+    public List<StudentInfo> getStudents() { return students; }
+    public void setStudents(List<StudentInfo> students) { this.students = students; }
 }

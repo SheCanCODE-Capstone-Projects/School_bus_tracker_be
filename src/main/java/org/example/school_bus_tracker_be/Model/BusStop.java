@@ -19,10 +19,10 @@ public class BusStop {
     private String name;
 
     @Column(nullable = false)
-    private Double latitude;
+    private double longitude;
 
     @Column(nullable = false)
-    private Double longitude;
+    private double latitude;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -39,6 +39,14 @@ public class BusStop {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public double getLongitude() { return longitude; }
+    public void setLongitude(double longitude) { this.longitude = longitude; }
+
+    public double getLatitude() { return latitude; }
+    public void setLatitude(double latitude) { this.latitude = latitude; }
     public School getSchool() { return school; }
     public void setSchool(School school) { this.school = school; }
 

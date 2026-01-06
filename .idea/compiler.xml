@@ -7,6 +7,8 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="School_bus_tracker_be (1)" />
+        <module name="School_bus_tracker_be (2)" />
+        <module name="School_bus_tracker_be" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>

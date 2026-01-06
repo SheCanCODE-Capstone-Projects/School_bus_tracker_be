@@ -7,9 +7,6 @@ import org.example.school_bus_tracker_be.Config.JwtTokenProvider;
 import org.example.school_bus_tracker_be.DTO.ChildInfo;
 import org.example.school_bus_tracker_be.DTO.DriverRegisterRequest;
 import org.example.school_bus_tracker_be.DTO.ParentRegisterRequest;
-import org.example.school_bus_tracker_be.DTO.AdminRegisterRequest;
-import org.example.school_bus_tracker_be.DTO.AdminAddDriverRequest;
-import org.example.school_bus_tracker_be.DTO.AdminAddStudentRequest;
 import org.example.school_bus_tracker_be.Dtos.auth.AuthRequest;
 import org.example.school_bus_tracker_be.Dtos.auth.AuthResponse;
 import org.example.school_bus_tracker_be.Dtos.auth.PasswordResetConfirmRequest;
@@ -228,72 +225,5 @@ public class AuthServiceImpl implements AuthService {
 
     private Integer calculateGrade(Integer age) {
         return Math.max(1, age - 5);
-    }
-
-    // ========================= REGISTER ADMIN =========================
-    @Override
-    public AuthResponse registerAdmin(AdminRegisterRequest request) {
-        validateUser(request.getEmail(), request.getPhone());
-
-        School school = schoolRepository.findById(request.getSchoolId())
-                .orElseThrow(() -> new RuntimeException("School not found"));
-
-        User admin = new User(
-                school,
-                request.getName(),
-                request.getEmail(),
-                passwordEncoder.encode(request.getPassword()),
-                request.getPhone(),
-                User.Role.ADMIN
-        );
-
-        userRepository.save(admin);
-
-        String token = tokenProvider.generateToken(admin);
-
-        return new AuthResponse(
-                token,
-                tokenProvider.getJwtExpirationMs(),
-                admin.getRole().name()
-        );
-    }
-
-    // ========================= ADD DRIVER BY ADMIN =========================
-    @Override
-    public User addDriverByAdmin(AdminAddDriverRequest request, Long adminId) {
-        User admin = userRepository.findById(adminId)
-                .orElseThrow(() -> new RuntimeException("Admin not found"));
-
-        validateUser(request.getEmail(), request.getPhoneNumber());
-
-        User driver = new User(
-                admin.getSchool(),
-                request.getFullName(),
-                request.getEmail(),
-                passwordEncoder.encode(request.getPassword()),
-                request.getPhoneNumber(),
-                User.Role.DRIVER
-        );
-
-        return userRepository.save(driver);
-    }
-
-    // ========================= ADD STUDENT BY ADMIN =========================
-    @Override
-    public Student addStudentByAdmin(AdminAddStudentRequest request, Long adminId) {
-        User admin = userRepository.findById(adminId)
-                .orElseThrow(() -> new RuntimeException("Admin not found"));
-
-        Student student = new Student();
-        student.setSchool(admin.getSchool());
-        student.setStudentName(request.getStudentName());
-        student.setAge(request.getAge());
-        student.setParentName(request.getParentName());
-        student.setParentPhone(request.getParentPhone());
-        student.setAddress(request.getAddress());
-        student.setStudentNumber("STU" + System.currentTimeMillis());
-        student.setGrade(Math.max(1, request.getAge() - 5));
-
-        return studentRepository.save(student);
     }
 }

@@ -1,6 +1,6 @@
 package org.example.school_bus_tracker_be.DTO;
 
-import org.example.school_bus_tracker_be.Model.User;
+import org.example.school_bus_tracker_be.Enum.Role;
 import java.time.LocalDateTime;
 
 public class UserResponse {
@@ -8,7 +8,7 @@ public class UserResponse {
     private String name;
     private String email;
     private String phone;
-    private User.Role role;
+    private Role role;
     private String schoolName;
     private Long schoolId;
     private LocalDateTime createdAt;
@@ -17,7 +17,7 @@ public class UserResponse {
     // Constructors
     public UserResponse() {}
 
-    public UserResponse(Long id, String name, String email, String phone, User.Role role, 
+    public UserResponse(Long id, String name, String email, String phone, Role role, 
                        String schoolName, Long schoolId, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.name = name;
@@ -43,8 +43,8 @@ public class UserResponse {
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
 
-    public User.Role getRole() { return role; }
-    public void setRole(User.Role role) { this.role = role; }
+    public Role getRole() { return role; }
+    public void setRole(Role role) { this.role = role; }
 
     public String getSchoolName() { return schoolName; }
     public void setSchoolName(String schoolName) { this.schoolName = schoolName; }

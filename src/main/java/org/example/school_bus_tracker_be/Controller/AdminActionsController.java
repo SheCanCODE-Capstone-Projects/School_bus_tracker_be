@@ -4,10 +4,9 @@ import org.example.school_bus_tracker_be.Config.JwtTokenProvider;
 import org.example.school_bus_tracker_be.DTO.AdminAddStudentRequest;
 import org.example.school_bus_tracker_be.DTO.ApiResponse;
 import org.example.school_bus_tracker_be.Dtos.bus.CreateBusRequest;
-import org.example.school_bus_tracker_be.Dtos.student.StudentResponse;
+import org.example.school_bus_tracker_be.DTO.StudentResponse;
 import org.example.school_bus_tracker_be.Model.*;
 import org.example.school_bus_tracker_be.Repository.*;
-import org.example.school_bus_tracker_be.Enum.Role;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -54,7 +53,7 @@ public class AdminActionsController {
         try {
             Long adminId = getCurrentUserId(request);
             User admin = userRepository.findById(adminId).orElseThrow();
-            List<User> drivers = userRepository.findBySchoolAndRole(admin.getSchool(), Role.DRIVER);
+            List<User> drivers = userRepository.findBySchoolAndRole(admin.getSchool(), User.Role.DRIVER);
             return ResponseEntity.ok(ApiResponse.success("Drivers retrieved successfully", drivers));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
@@ -65,7 +64,7 @@ public class AdminActionsController {
     public ResponseEntity<ApiResponse<User>> getDriver(@PathVariable Long id) {
         try {
             User driver = userRepository.findById(id).orElseThrow(() -> new RuntimeException("Driver not found"));
-            if (!driver.getRole().equals(Role.DRIVER)) {
+            if (!driver.getRole().equals(User.Role.DRIVER)) {
                 throw new RuntimeException("User is not a driver");
             }
             return ResponseEntity.ok(ApiResponse.success("Driver retrieved successfully", driver));
@@ -78,7 +77,7 @@ public class AdminActionsController {
     public ResponseEntity<ApiResponse<User>> updateDriver(@PathVariable Long id, @RequestBody UpdateUserRequest request) {
         try {
             User driver = userRepository.findById(id).orElseThrow(() -> new RuntimeException("Driver not found"));
-            if (!driver.getRole().equals(Role.DRIVER)) {
+            if (!driver.getRole().equals(User.Role.DRIVER)) {
                 throw new RuntimeException("User is not a driver");
             }
             
@@ -98,7 +97,7 @@ public class AdminActionsController {
     public ResponseEntity<ApiResponse<String>> deleteDriver(@PathVariable Long id) {
         try {
             User driver = userRepository.findById(id).orElseThrow(() -> new RuntimeException("Driver not found"));
-            if (!driver.getRole().equals(Role.DRIVER)) {
+            if (!driver.getRole().equals(User.Role.DRIVER)) {
                 throw new RuntimeException("User is not a driver");
             }
             userRepository.delete(driver);
@@ -129,6 +128,15 @@ public class AdminActionsController {
             student.setParentPhone(request.getParentPhone());
             student.setAddress(request.getAddress());
             
+            // Generate student number if not provided
+            student.setStudentNumber("STU" + System.currentTimeMillis());
+            
+            // Set grade if available in request
+            if (request.getAge() != null) {
+                // Simple grade calculation based on age
+                student.setGrade(Math.max(1, request.getAge() - 5));
+            }
+            
             // Set bus stop if provided
             if (request.getBusStopId() != null) {
                 BusStop busStop = busStopRepository.findById(request.getBusStopId())
@@ -145,29 +153,14 @@ public class AdminActionsController {
             
             Student saved = studentRepository.save(student);
 
-            StudentResponse.BusStopInfo bsInfo = null;
-            if (saved.getBusStop() != null) {
-                bsInfo = new StudentResponse.BusStopInfo(saved.getBusStop().getName(), null);
-            }
-
-            StudentResponse.AssignedBusInfo abInfo = null;
-            if (saved.getAssignedBus() != null) {
-                abInfo = new StudentResponse.AssignedBusInfo(saved.getAssignedBus().getBusName(), saved.getAssignedBus().getBusNumber());
-            }
-
             StudentResponse resp = new StudentResponse(
                     saved.getId(),
                     saved.getStudentName(),
+                    null, // studentNumber
                     saved.getAge(),
-                    saved.getParentName(),
-                    saved.getParentPhone(),
-                    saved.getAddress(),
-                    bsInfo,
-                    abInfo
+                    null, // level
+                    null  // gender
             );
-
-            // set school_id in response if needed
-            resp.setSchoolId(saved.getSchool() != null ? saved.getSchool().getId() : null);
 
             return ResponseEntity.ok(ApiResponse.success("Student created successfully", resp));
         } catch (Exception e) {
@@ -209,7 +202,10 @@ public class AdminActionsController {
                 student.setSchool(school);
             }
             if (request.getAddress() != null) student.setAddress(request.getAddress());
-            if (request.getAge() != null) student.setAge(request.getAge());
+            if (request.getAge() != null) {
+                student.setAge(request.getAge());
+                student.setGrade(Math.max(1, request.getAge() - 5));
+            }
             if (request.getParentName() != null) student.setParentName(request.getParentName());
             if (request.getParentPhone() != null) student.setParentPhone(request.getParentPhone());
             
@@ -237,7 +233,7 @@ public class AdminActionsController {
         try {
             Long adminId = getCurrentUserId(request);
             User admin = userRepository.findById(adminId).orElseThrow();
-            List<User> parents = userRepository.findBySchoolAndRole(admin.getSchool(), Role.PARENT);
+            List<User> parents = userRepository.findBySchoolAndRole(admin.getSchool(), User.Role.PARENT);
             return ResponseEntity.ok(ApiResponse.success("Parents retrieved successfully", parents));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
@@ -248,7 +244,7 @@ public class AdminActionsController {
     public ResponseEntity<ApiResponse<String>> deleteParent(@PathVariable Long id) {
         try {
             User parent = userRepository.findById(id).orElseThrow(() -> new RuntimeException("Parent not found"));
-            if (!parent.getRole().equals(Role.PARENT)) {
+            if (!parent.getRole().equals(User.Role.PARENT)) {
                 throw new RuntimeException("User is not a parent");
             }
             userRepository.delete(parent);
@@ -351,8 +347,8 @@ public class AdminActionsController {
             School school = admin.getSchool();
             
             SystemStats stats = new SystemStats();
-            stats.setTotalDrivers(userRepository.countBySchoolAndRole(school, Role.DRIVER));
-            stats.setTotalParents(userRepository.countBySchoolAndRole(school, Role.PARENT));
+            stats.setTotalDrivers(userRepository.countBySchoolAndRole(school, User.Role.DRIVER));
+            stats.setTotalParents(userRepository.countBySchoolAndRole(school, User.Role.PARENT));
             stats.setTotalStudents(studentRepository.countBySchool(school));
             stats.setTotalBuses(busRepository.countBySchool(school));
             

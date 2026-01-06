@@ -1,42 +1,35 @@
 package org.example.school_bus_tracker_be.Dtos.driver;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 
-@Schema(description = "Driver response with bus assignment details")
-public class DriverResponse {
+@Schema(description = "Request to create or update a driver")
+public class DriverRequest {
     
-    @Schema(description = "Driver ID (auto-generated)", example = "1")
-    private Long id;
-    
-    @JsonProperty("school_id")
-    @Schema(description = "School ID the driver belongs to", example = "1")
-    private Long schoolId;
-    
-    @JsonProperty("full_name")
+    @NotBlank(message = "Full name is required")
     @Schema(description = "Driver full name", example = "John Smith")
     private String fullName;
     
+    @NotBlank(message = "Email is required")
+    @Email(message = "Email should be valid")
     @Schema(description = "Driver email", example = "john.smith@example.com")
     private String email;
     
-    @JsonProperty("phone_number")
+    @NotBlank(message = "Phone number is required")
     @Schema(description = "Driver phone number", example = "+1234567890")
     private String phoneNumber;
     
-    @JsonProperty("license_number")
+    @NotBlank(message = "License number is required")
     @Schema(description = "Driver license number", example = "DL123456789")
     private String licenseNumber;
     
-    @JsonProperty("assigned_bus_id")
     @Schema(description = "Assigned bus ID", example = "1")
     private Long assignedBusId;
     
-    public DriverResponse() {}
+    public DriverRequest() {}
     
-    public DriverResponse(Long id, Long schoolId, String fullName, String email, String phoneNumber, String licenseNumber, Long assignedBusId) {
-        this.id = id;
-        this.schoolId = schoolId;
+    public DriverRequest(String fullName, String email, String phoneNumber, String licenseNumber, Long assignedBusId) {
         this.fullName = fullName;
         this.email = email;
         this.phoneNumber = phoneNumber;
@@ -45,12 +38,6 @@ public class DriverResponse {
     }
     
     // Getters and Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    
-    public Long getSchoolId() { return schoolId; }
-    public void setSchoolId(Long schoolId) { this.schoolId = schoolId; }
-    
     public String getFullName() { return fullName; }
     public void setFullName(String fullName) { this.fullName = fullName; }
     

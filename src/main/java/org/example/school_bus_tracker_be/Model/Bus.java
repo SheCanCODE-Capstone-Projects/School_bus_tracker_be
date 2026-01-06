@@ -26,8 +26,21 @@ public class Bus {
     @Column(name = "bus_number", nullable = false, unique = true)
     private String busNumber;
 
+    @Column(name = "bus_name")
+    private String busName;
+
+    @Column(name = "capacity")
+    private Integer capacity;
+
+    @Column(name = "route")
+    private String route;
+
     @Column(name = "plate_number", nullable = false, unique = true)
     private String plateNumber;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_driver_id")
+    private Driver assignedDriver;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -63,8 +76,20 @@ public class Bus {
     public String getBusNumber() { return busNumber; }
     public void setBusNumber(String busNumber) { this.busNumber = busNumber; }
 
+    public String getBusName() { return busName; }
+    public void setBusName(String busName) { this.busName = busName; }
+
+    public Integer getCapacity() { return capacity; }
+    public void setCapacity(Integer capacity) { this.capacity = capacity; }
+
+    public String getRoute() { return route; }
+    public void setRoute(String route) { this.route = route; }
+
     public String getPlateNumber() { return plateNumber; }
     public void setPlateNumber(String plateNumber) { this.plateNumber = plateNumber; }
+
+    public Driver getAssignedDriver() { return assignedDriver; }
+    public void setAssignedDriver(Driver assignedDriver) { this.assignedDriver = assignedDriver; }
 
     public Status getStatus() { return status; }
     public void setStatus(Status status) { this.status = status; }

@@ -48,6 +48,15 @@ public class Student {
     @Column(nullable = false)
     private Integer grade;
 
+    @Column(name = "parent_name")
+    private String parentName;
+
+    @Column(name = "parent_phone")
+    private String parentPhone;
+
+    @Column(name = "address")
+    private String address;
+
     // ========================= METADATA =========================
 
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -143,6 +152,30 @@ public class Student {
 
     public void setGrade(Integer grade) {
         this.grade = grade;
+    }
+
+    public String getParentName() {
+        return parentName;
+    }
+
+    public void setParentName(String parentName) {
+        this.parentName = parentName;
+    }
+
+    public String getParentPhone() {
+        return parentPhone;
+    }
+
+    public void setParentPhone(String parentPhone) {
+        this.parentPhone = parentPhone;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
     }
 
     public LocalDateTime getCreatedAt() {

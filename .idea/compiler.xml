@@ -7,14 +7,19 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="School_bus_tracker_be (1)" />
+        <module name="School_bus_tracker_be (2)" />
         <module name="School_bus_tracker_be" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="School_bus_tracker_be (2)" target="21" />
+    </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="School_bus_tracker_be" options="-parameters" />
       <module name="School_bus_tracker_be (1)" options="-parameters" />
+      <module name="School_bus_tracker_be (2)" options="-parameters" />
     </option>
   </component>
 </project>

@@ -3,6 +3,7 @@ package org.example.school_bus_tracker_be.DTO;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import java.util.List;
 
 public class ParentRegisterRequest {
     
@@ -21,6 +22,12 @@ public class ParentRegisterRequest {
     
     @NotBlank
     private String phone;
+    
+    @NotBlank
+    private String homeAddress;
+    
+    @NotNull
+    private List<ChildInfo> children;
 
     public Long getSchoolId() { return schoolId; }
     public void setSchoolId(Long schoolId) { this.schoolId = schoolId; }
@@ -32,4 +39,10 @@ public class ParentRegisterRequest {
     public void setPassword(String password) { this.password = password; }
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
+
+    public String getHomeAddress() { return homeAddress; }
+    public void setHomeAddress(String homeAddress) { this.homeAddress = homeAddress; }
+
+    public List<ChildInfo> getChildren() { return children; }
+    public void setChildren(List<ChildInfo> children) { this.children = children; }
 }

@@ -39,6 +39,7 @@ public class JwtTokenProvider {
         Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
 
         Claims claims = Jwts.claims().setSubject(user.getEmail());
+        claims.put("userId", user.getId());
         claims.put("role", user.getRole().name());
 
         return Jwts.builder()
@@ -63,6 +64,11 @@ public class JwtTokenProvider {
     public String getRoleFromToken(String token) {
         Object role = parseClaims(token).get("role");
         return role != null ? role.toString() : null;
+    }
+
+    public Long getUserIdFromToken(String token) {
+        Object userId = parseClaims(token).get("userId");
+        return userId != null ? Long.valueOf(userId.toString()) : null;
     }
 
     /**

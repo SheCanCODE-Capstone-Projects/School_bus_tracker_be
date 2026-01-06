@@ -6,7 +6,6 @@ import org.example.school_bus_tracker_be.Model.User;
 import org.example.school_bus_tracker_be.Repository.DriverRepository;
 import org.example.school_bus_tracker_be.Repository.SchoolRepository;
 import org.example.school_bus_tracker_be.Repository.UserRepository;
-import org.example.school_bus_tracker_be.Enum.Role;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -48,7 +47,7 @@ public class DataInitializer implements CommandLineRunner {
         }
 
         // Create default admin if none exists
-        if (userRepository.findByRole(Role.ADMIN).isEmpty()) {
+        if (userRepository.findByRole(User.Role.ADMIN).isEmpty()) {
             School defaultSchool = schoolRepository.findAll().get(0);
             
             User admin = new User(
@@ -57,7 +56,7 @@ public class DataInitializer implements CommandLineRunner {
                 defaultAdminEmail,
                 passwordEncoder.encode(defaultAdminPassword),
                 "555-0100",
-                Role.ADMIN
+                User.Role.ADMIN
             );
             
             userRepository.save(admin);

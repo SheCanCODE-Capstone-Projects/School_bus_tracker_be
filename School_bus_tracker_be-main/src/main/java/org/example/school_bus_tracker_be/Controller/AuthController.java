@@ -4,9 +4,10 @@ import org.example.school_bus_tracker_be.Config.JwtTokenProvider;
 import org.example.school_bus_tracker_be.DTO.LoginRequest;
 import org.example.school_bus_tracker_be.DTO.LoginResponse;
 import org.example.school_bus_tracker_be.DTO.AdminRegisterRequest;
-import org.example.school_bus_tracker_be.DTO.SimpleApiResponse;
 import org.example.school_bus_tracker_be.DTO.DriverRegisterRequest;
 import org.example.school_bus_tracker_be.DTO.ParentRegisterRequest;
+import org.example.school_bus_tracker_be.DTO.SimpleApiResponse;
+import org.example.school_bus_tracker_be.Dtos.auth.AuthRequest;
 import org.example.school_bus_tracker_be.Dtos.auth.AuthResponse;
 import org.example.school_bus_tracker_be.Dtos.auth.PasswordResetRequest;
 import org.example.school_bus_tracker_be.Dtos.auth.PasswordResetConfirmRequest;
@@ -20,11 +21,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 
@@ -48,6 +45,11 @@ public class AuthController {
         this.passwordEncoder = passwordEncoder;
         this.tokenProvider = tokenProvider;
         this.authService = authService;
+    }
+
+    @GetMapping
+    public ResponseEntity<?> getAuthResponse() {
+        return ResponseEntity.ok("Authentication endpoint is working");
     }
 
     @PostMapping("/login")
@@ -88,21 +90,13 @@ public class AuthController {
         }
     }
 
-    @PostMapping("/admin/register")
-    public ResponseEntity<?> registerAdmin(@RequestBody AdminRegisterRequest request) {
-        try {
-            AuthResponse response = authService.registerAdmin(request);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(e.getMessage());
-        }
-    }
-
-    @GetMapping
-    public ResponseEntity<?> getAuthResponse() {
-        return ResponseEntity.ok("Authentication endpoint is working");
+    /**
+     * Alternative login endpoint using AuthRequest DTO
+     */
+    @PostMapping("/login-alt")
+    public ResponseEntity<AuthResponse> loginAlt(@RequestBody @Valid AuthRequest request) {
+        AuthResponse response = authService.login(request);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/register/driver")
@@ -115,12 +109,37 @@ public class AuthController {
         return ResponseEntity.ok(authService.registerParent(request));
     }
 
+    @PostMapping("/admin/register")
+    public ResponseEntity<?> registerAdmin(@RequestBody AdminRegisterRequest request) {
+        try {
+            AuthResponse response = authService.registerAdmin(request);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(e.getMessage());
+        }
+    }
+
+    /**
+     * Request password reset for a user by email.
+     * Sends a reset token to the user's email address.
+     *
+     * @param request the password reset request containing email
+     * @return a response entity indicating success
+     */
     @PostMapping("/password-reset/request")
     public ResponseEntity<SimpleApiResponse> requestPasswordReset(@RequestBody @Valid PasswordResetRequest request) {
         authService.requestPasswordReset(request);
         return ResponseEntity.ok(SimpleApiResponse.success("Password reset email sent successfully"));
     }
 
+    /**
+     * Confirm password reset using the token and new password.
+     *
+     * @param request the password reset confirmation request
+     * @return a response entity indicating success
+     */
     @PostMapping("/password-reset/confirm")
     public ResponseEntity<SimpleApiResponse> confirmPasswordReset(@RequestBody @Valid PasswordResetConfirmRequest request) {
         authService.confirmPasswordReset(request);

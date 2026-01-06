@@ -2,11 +2,13 @@ package org.example.school_bus_tracker_be.serviceimpl;
 
 import org.example.school_bus_tracker_be.Service.EmailService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 @Service
+@ConditionalOnProperty(name = "spring.mail.host", matchIfMissing = false)
 public class EmailServiceImpl implements EmailService {
 
     private final JavaMailSender mailSender;

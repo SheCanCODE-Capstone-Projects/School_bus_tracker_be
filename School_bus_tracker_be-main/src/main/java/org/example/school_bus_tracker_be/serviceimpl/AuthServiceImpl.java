@@ -238,6 +238,16 @@ public class AuthServiceImpl implements AuthService {
         return studentRepository.save(student);
     }
 
+    @Override
+    public void requestPasswordReset(org.example.school_bus_tracker_be.Dtos.auth.PasswordResetRequest request) {
+        throw new RuntimeException("Password reset functionality not implemented");
+    }
+
+    @Override
+    public void confirmPasswordReset(org.example.school_bus_tracker_be.Dtos.auth.PasswordResetConfirmRequest request) {
+        throw new RuntimeException("Password reset functionality not implemented");
+    }
+
     private void validateUser(String email, String phone) {
         if (userRepository.existsByEmail(email)) {
             throw new RuntimeException("Email already exists");

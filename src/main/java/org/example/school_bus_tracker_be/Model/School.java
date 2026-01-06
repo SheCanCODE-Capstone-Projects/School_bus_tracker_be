@@ -1,6 +1,7 @@
 package org.example.school_bus_tracker_be.Model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+
+
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,8 +25,7 @@ public class School {
     private LocalDateTime createdAt;
 
     // One school can have many users
-    @OneToMany(mappedBy = "school", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnore
+    @OneToMany(mappedBy = "school", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<User> users;
 
     // Constructors

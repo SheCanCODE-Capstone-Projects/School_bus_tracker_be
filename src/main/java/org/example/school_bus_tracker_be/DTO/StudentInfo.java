@@ -3,6 +3,10 @@ package org.example.school_bus_tracker_be.DTO;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+/**
+ * DTO class for student information
+ * Contains basic student details for registration and updates
+ */
 public class StudentInfo {
     
     @NotBlank

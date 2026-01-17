@@ -38,18 +38,34 @@ public class Student {
     @JoinColumn(name = "assigned_bus_id")
     private Bus assignedBus;
 
+    @Column(nullable = false)
+    private String gender;
+
+    @Column(nullable = false)
+    private String level;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     public Student() {}
 
+<<<<<<< Updated upstream
     public Student(School school, String studentName, Integer age, String parentName, String parentPhone, String address) {
+=======
+    public Student(School school, User parent, BusStop busStop, String name, String studentNumber, Integer age, Integer grade, String gender, String level) {
+>>>>>>> Stashed changes
         this.school = school;
         this.studentName = studentName;
         this.age = age;
+<<<<<<< Updated upstream
         this.parentName = parentName;
         this.parentPhone = parentPhone;
         this.address = address;
+=======
+        this.grade = grade;
+        this.gender = gender;
+        this.level = level;
+>>>>>>> Stashed changes
     }
 
     // Getters and Setters
@@ -79,6 +95,12 @@ public class Student {
 
     public Bus getAssignedBus() { return assignedBus; }
     public void setAssignedBus(Bus assignedBus) { this.assignedBus = assignedBus; }
+
+    public String getGender() { return gender; }
+    public void setGender(String gender) { this.gender = gender; }
+
+    public String getLevel() { return level; }
+    public void setLevel(String level) { this.level = level; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
 

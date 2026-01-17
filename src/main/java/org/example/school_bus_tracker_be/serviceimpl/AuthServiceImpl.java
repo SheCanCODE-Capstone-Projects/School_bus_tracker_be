@@ -96,6 +96,7 @@ public class AuthServiceImpl implements AuthService {
 
     // REGISTER DRIVER
     @Override
+    @Transactional
     public AuthResponse registerDriver(DriverRegisterRequest request) {
         validateUser(request.getEmail(), request.getPhone());
 
@@ -111,10 +112,11 @@ public class AuthServiceImpl implements AuthService {
                 Role.DRIVER
         );
 
-        userRepository.save(driver);
+        User savedDriver = userRepository.save(driver);
+        System.out.println("Driver saved with ID: " + savedDriver.getId());
 
-        String token = tokenProvider.generateToken(driver);
-        return new AuthResponse(token, tokenProvider.getJwtExpirationMs(), driver.getRole().name());
+        String token = tokenProvider.generateToken(savedDriver);
+        return new AuthResponse(token, tokenProvider.getJwtExpirationMs(), savedDriver.getRole().name());
     }
 
     // REGISTER PARENT

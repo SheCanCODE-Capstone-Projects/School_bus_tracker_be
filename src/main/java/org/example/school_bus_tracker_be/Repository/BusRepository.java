@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+<<<<<<< Updated upstream
 /**
  * Repository for {@link Bus} entities.
  */
@@ -15,3 +16,12 @@ public interface BusRepository extends JpaRepository<Bus, Long> {
     List<Bus> findBySchool(School school);
     long countBySchool(School school);
 }
+=======
+@Repository
+public interface BusRepository extends JpaRepository<Bus, Long> {
+    
+    boolean existsByBusNumber(String busNumber);
+    boolean existsByPlateNumber(String plateNumber);
+    List<Bus> findBySchoolId(Long schoolId);
+}
+>>>>>>> Stashed changes

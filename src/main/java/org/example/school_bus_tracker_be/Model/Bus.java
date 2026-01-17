@@ -1,7 +1,6 @@
 package org.example.school_bus_tracker_be.Model;
 
-
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -43,6 +42,7 @@ public class Bus {
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "bus", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<LocationPoint> locationPoints;
 
     @OneToMany(mappedBy = "assignedBus", cascade = CascadeType.ALL)

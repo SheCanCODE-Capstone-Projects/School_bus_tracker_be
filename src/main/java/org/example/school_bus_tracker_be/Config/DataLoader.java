@@ -28,7 +28,7 @@ public class DataLoader implements CommandLineRunner {
         School school;
         List<School> schools = schoolRepository.findAll();
         if (schools.isEmpty()) {
-            school = new School("Default School", "123 Default Address");
+            school = new School("Default School", "123 Default Address","+250782600535");
             school = schoolRepository.save(school);
         } else {
             school = schools.get(0);

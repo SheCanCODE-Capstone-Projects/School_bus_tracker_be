@@ -34,9 +34,10 @@ public class School {
     // Constructors
     public School() {}
 
-    public School(String name, String address) {
+    public School(String name, String address, String phone) {
         this.name = name;
         this.address = address;
+        this.phone= phone;
     }
 
     // Getters and Setters

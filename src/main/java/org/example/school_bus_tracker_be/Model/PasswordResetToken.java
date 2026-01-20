@@ -12,7 +12,7 @@ public class PasswordResetToken {
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private String token;
+    private String code; // Changed from token to code (6-digit verification code)
 
     @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", nullable = false)
@@ -26,8 +26,8 @@ public class PasswordResetToken {
 
     public PasswordResetToken() {}
 
-    public PasswordResetToken(String token, User user, LocalDateTime expiryDate) {
-        this.token = token;
+    public PasswordResetToken(String code, User user, LocalDateTime expiryDate) {
+        this.code = code;
         this.user = user;
         this.expiryDate = expiryDate;
     }
@@ -36,8 +36,8 @@ public class PasswordResetToken {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public String getToken() { return token; }
-    public void setToken(String token) { this.token = token; }
+    public String getCode() { return code; }
+    public void setCode(String code) { this.code = code; }
 
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }

@@ -7,25 +7,33 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(description = "Request to confirm password reset")
 public class PasswordResetConfirmRequest {
 
-    @NotBlank(message = "Token is required")
-    @Schema(description = "Password reset token", example = "abc123def456", required = true)
-    private String token;
+    @NotBlank(message = "Verification code is required")
+    @Schema(description = "6-digit verification code sent to email", example = "123456", required = true)
+    private String code;
 
     @NotBlank(message = "New password is required")
     @Size(min = 6, message = "Password must be at least 6 characters long")
     @Schema(description = "New password", example = "newPassword123", required = true, minLength = 6)
     private String newPassword;
 
+    @NotBlank(message = "Password confirmation is required")
+    @Schema(description = "Confirm new password", example = "newPassword123", required = true)
+    private String confirmPassword;
+
     public PasswordResetConfirmRequest() {}
 
-    public PasswordResetConfirmRequest(String token, String newPassword) {
-        this.token = token;
+    public PasswordResetConfirmRequest(String code, String newPassword, String confirmPassword) {
+        this.code = code;
         this.newPassword = newPassword;
+        this.confirmPassword = confirmPassword;
     }
 
-    public String getToken() { return token; }
-    public void setToken(String token) { this.token = token; }
+    public String getCode() { return code; }
+    public void setCode(String code) { this.code = code; }
 
     public String getNewPassword() { return newPassword; }
     public void setNewPassword(String newPassword) { this.newPassword = newPassword; }
+
+    public String getConfirmPassword() { return confirmPassword; }
+    public void setConfirmPassword(String confirmPassword) { this.confirmPassword = confirmPassword; }
 }

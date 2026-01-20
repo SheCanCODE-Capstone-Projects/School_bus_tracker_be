@@ -1,7 +1,6 @@
 package org.example.school_bus_tracker_be.serviceimpl;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 import org.example.school_bus_tracker_be.Config.JwtTokenProvider;
 import org.example.school_bus_tracker_be.DTO.DriverRegisterRequest;
@@ -29,7 +28,7 @@ import org.example.school_bus_tracker_be.Repository.BusRepository;
 import org.example.school_bus_tracker_be.Repository.BusStopRepository;
 import org.example.school_bus_tracker_be.Repository.PasswordResetTokenRepository;
 import org.example.school_bus_tracker_be.Service.AuthService;
-//import org.example.school_bus_tracker_be.Service.EmailService;
+import org.example.school_bus_tracker_be.Service.EmailService;
 import org.example.school_bus_tracker_be.Enum.Role;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -52,7 +51,7 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider tokenProvider;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
-//    private final EmailService emailService;
+    private final EmailService emailService;
 
     public AuthServiceImpl(
             AuthenticationManager authenticationManager,
@@ -64,7 +63,8 @@ public class AuthServiceImpl implements AuthService {
             BusStopRepository busStopRepository,
             PasswordEncoder passwordEncoder,
             JwtTokenProvider tokenProvider,
-            PasswordResetTokenRepository passwordResetTokenRepository
+            PasswordResetTokenRepository passwordResetTokenRepository,
+            EmailService emailService
             ) {
 
         this.authenticationManager = authenticationManager;
@@ -77,6 +77,7 @@ public class AuthServiceImpl implements AuthService {
         this.passwordEncoder = passwordEncoder;
         this.tokenProvider = tokenProvider;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
+        this.emailService = emailService;
 
     }
 
@@ -308,41 +309,52 @@ public class AuthServiceImpl implements AuthService {
                         new RuntimeException("User not found with email: " + request.getEmail())
                 );
 
+        // Delete any existing reset tokens for this user
         passwordResetTokenRepository.deleteByUser(user);
 
-        String token = UUID.randomUUID().toString();
-        LocalDateTime expiryDate = LocalDateTime.now().plusHours(1);
+        // Generate 6-digit verification code
+        String code = generateVerificationCode();
+        LocalDateTime expiryDate = LocalDateTime.now().plusMinutes(10); // Code expires in 10 minutes
 
         PasswordResetToken resetToken =
-                new PasswordResetToken(token, user, expiryDate);
+                new PasswordResetToken(code, user, expiryDate);
 
         passwordResetTokenRepository.save(resetToken);
 
-//        emailService.sendPasswordResetEmail(user.getEmail(), token);
+        // Send email with verification code
+        emailService.sendPasswordResetCode(user.getEmail(), code);
     }
 
     // ========================= PASSWORD RESET CONFIRM =========================
     @Override
     @Transactional
     public void confirmPasswordReset(PasswordResetConfirmRequest request) {
+        // Validate passwords match
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new RuntimeException("Passwords do not match");
+        }
+
+        // Find reset token by code
         PasswordResetToken resetToken =
-                passwordResetTokenRepository.findByToken(request.getToken())
+                passwordResetTokenRepository.findByCode(request.getCode())
                         .orElseThrow(() ->
-                                new RuntimeException("Invalid reset token")
+                                new RuntimeException("Invalid verification code")
                         );
 
         if (resetToken.isExpired()) {
-            throw new RuntimeException("Reset token has expired");
+            throw new RuntimeException("Verification code has expired. Please request a new one.");
         }
 
         if (resetToken.isUsed()) {
-            throw new RuntimeException("Reset token already used");
+            throw new RuntimeException("Verification code has already been used. Please request a new one.");
         }
 
+        // Update user password
         User user = resetToken.getUser();
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
 
+        // Mark token as used
         resetToken.setUsed(true);
         passwordResetTokenRepository.save(resetToken);
     }
@@ -355,6 +367,15 @@ public class AuthServiceImpl implements AuthService {
         if (userRepository.existsByPhone(phone)) {
             throw new RuntimeException("Phone number already exists");
         }
+    }
+
+    /**
+     * Generates a 6-digit verification code for password reset
+     * @return 6-digit code as string
+     */
+    private String generateVerificationCode() {
+        int code = (int) (Math.random() * 900000) + 100000; // Generates number between 100000 and 999999
+        return String.valueOf(code);
     }
 
     private Integer calculateGrade(Integer age) {

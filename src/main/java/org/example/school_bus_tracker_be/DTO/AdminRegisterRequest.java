@@ -2,6 +2,7 @@ package org.example.school_bus_tracker_be.DTO;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public class AdminRegisterRequest {
@@ -20,7 +21,7 @@ public class AdminRegisterRequest {
     @NotBlank(message = "Phone is required")
     private String phone;
 
-    @NotBlank(message = "School ID is required")
+    @NotNull(message = "School ID is required")
     private Long schoolId;
 
     // Constructors

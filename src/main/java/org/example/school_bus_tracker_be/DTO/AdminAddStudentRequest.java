@@ -14,6 +14,8 @@ public class AdminAddStudentRequest {
     @Min(value = 3, message = "Age must be at least 3")
     private Integer age;
 
+    private String gender;
+
     @NotBlank(message = "Parent name is required")
     private String parentName;
 
@@ -50,6 +52,9 @@ public class AdminAddStudentRequest {
 
     public Integer getAge() { return age; }
     public void setAge(Integer age) { this.age = age; }
+
+    public String getGender() { return gender; }
+    public void setGender(String gender) { this.gender = gender; }
 
     public String getParentName() { return parentName; }
     public void setParentName(String parentName) { this.parentName = parentName; }

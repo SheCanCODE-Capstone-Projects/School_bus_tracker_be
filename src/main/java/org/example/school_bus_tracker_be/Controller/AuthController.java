@@ -109,18 +109,6 @@ public class AuthController {
         return ResponseEntity.ok(authService.registerParent(request));
     }
 
-    @PostMapping("/admin/register")
-    public ResponseEntity<?> registerAdmin(@RequestBody AdminRegisterRequest request) {
-        try {
-            AuthResponse response = authService.registerAdmin(request);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(e.getMessage());
-        }
-    }
-
     /**
      * Request password reset for a user by email.
      * Sends a reset token to the user's email address.

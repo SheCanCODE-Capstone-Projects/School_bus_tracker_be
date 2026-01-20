@@ -144,10 +144,20 @@ public class AuthServiceImpl implements AuthService {
                         .findById(child.getBusStopId())
                         .orElse(null);
 
+                Student.Gender genderEnum = null;
+                if (child.getGender() != null && !child.getGender().isEmpty()) {
+                    try {
+                        genderEnum = Student.Gender.valueOf(child.getGender().toUpperCase());
+                    } catch (IllegalArgumentException e) {
+                        // Invalid gender, leave as null
+                    }
+                }
+
                 Student student = new Student(
                         school,
                         child.getFullName(),
                         child.getAge(),
+                        genderEnum,
                         request.getName(), // parent name
                         request.getPhone(), // parent phone
                         request.getHomeAddress() != null ? request.getHomeAddress() : "" // address
@@ -253,10 +263,20 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new RuntimeException("School not found"));
         }
 
+        Student.Gender genderEnum = null;
+        if (request.getGender() != null && !request.getGender().isEmpty()) {
+            try {
+                genderEnum = Student.Gender.valueOf(request.getGender().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                // Invalid gender, leave as null
+            }
+        }
+
         Student student = new Student(
             school,
             request.getStudentName(),
             request.getAge(),
+            genderEnum,
             request.getParentName(),
             request.getParentPhone(),
             request.getAddress()

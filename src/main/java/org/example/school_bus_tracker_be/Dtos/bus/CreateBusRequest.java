@@ -24,20 +24,16 @@ public class CreateBusRequest {
     @Schema(description = "Bus route", example = "Route 1: Downtown - School")
     private String route;
     
-    @Schema(description = "Assigned driver ID", example = "1")
-    private Long assignedDriverId;
-    
     @Schema(description = "Bus status", example = "ACTIVE")
     private String status = "ACTIVE";
     
     public CreateBusRequest() {}
     
-    public CreateBusRequest(String busName, String busNumber, Integer capacity, String route, Long assignedDriverId, String status) {
+    public CreateBusRequest(String busName, String busNumber, Integer capacity, String route, String status) {
         this.busName = busName;
         this.busNumber = busNumber;
         this.capacity = capacity;
         this.route = route;
-        this.assignedDriverId = assignedDriverId;
         this.status = status;
     }
     
@@ -53,9 +49,6 @@ public class CreateBusRequest {
     
     public String getRoute() { return route; }
     public void setRoute(String route) { this.route = route; }
-    
-    public Long getAssignedDriverId() { return assignedDriverId; }
-    public void setAssignedDriverId(Long assignedDriverId) { this.assignedDriverId = assignedDriverId; }
     
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }

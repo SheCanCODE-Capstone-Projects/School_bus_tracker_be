@@ -2,36 +2,93 @@ package org.example.school_bus_tracker_be.serviceimpl;
 
 import org.example.school_bus_tracker_be.DTO.*;
 import org.example.school_bus_tracker_be.Dtos.auth.AuthResponse;
+import org.example.school_bus_tracker_be.Model.Student;
+import org.example.school_bus_tracker_be.Model.User;
+import org.example.school_bus_tracker_be.Repository.NotificationRepository;
+import org.example.school_bus_tracker_be.Model.Notification;
+import org.example.school_bus_tracker_be.Repository.StudentRepository;
+import org.example.school_bus_tracker_be.Repository.UserRepository;
 import org.example.school_bus_tracker_be.Service.ParentService;
 import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ParentServiceImpl implements ParentService {
 
+    private final StudentRepository studentRepository;
+    private final UserRepository userRepository;
+    private final NotificationRepository notificationRepository;
+
+    public ParentServiceImpl(StudentRepository studentRepository, UserRepository userRepository, NotificationRepository notificationRepository) {
+        this.studentRepository = studentRepository;
+        this.userRepository = userRepository;
+        this.notificationRepository = notificationRepository;
+    }
+
     @Override
     public AuthResponse registerParentWithStudents(ParentRegisterWithStudentsRequest request) {
-        // TODO: Implement parent registration with students
+        // This is handled by AuthService.registerParent
+        // This method can be removed or delegated to AuthService
         return new AuthResponse("mock-jwt-token", 3600000L, "PARENT");
     }
 
     @Override
     public List<StudentResponse> getParentStudents(Long parentId) {
-        List<StudentResponse> students = new ArrayList<>();
+        // Get parent user
+        User parent = userRepository.findById(parentId)
+                .orElseThrow(() -> new RuntimeException("Parent not found"));
+
+        // Find students by matching parent phone and school
+        // Students are linked to parents via parentPhone and parentName fields
+        List<Student> students = studentRepository.findByParentPhoneAndSchoolId(
+                parent.getPhone(), 
+                parent.getSchool().getId()
+        );
+
+        // Convert Student entities to StudentResponse DTOs
+        return students.stream()
+                .map(this::convertToStudentResponse)
+                .collect(Collectors.toList());
+    }
+    
+    private StudentResponse convertToStudentResponse(Student student) {
+        // Calculate level based on age (approximate)
+        String level = calculateLevel(student.getAge());
         
-        if (parentId == 1) {
-            students.add(new StudentResponse(1L, "Aurore", "ST101", 12, "P6", "FEMALE"));
-        } else if (parentId == 2) {
-            students.add(new StudentResponse(2L, "Emma Smith", "ST102", 10, "P4", "FEMALE"));
-            students.add(new StudentResponse(3L, "James Smith", "ST103", 8, "P2", "MALE"));
-        } else if (parentId == 3) {
-            students.add(new StudentResponse(4L, "Carlos Garcia", "ST104", 14, "S1", "MALE"));
-        } else {
-            // Return empty list for unknown parent IDs
-        }
+        // Generate student number if not exists (using ID)
+        String studentNumber = "ST" + String.format("%03d", student.getId());
         
-        return students;
+        // Get gender from Student model
+        String gender = student.getGender() != null ? student.getGender().name() : "UNKNOWN";
+        
+        return new StudentResponse(
+                student.getId(),
+                student.getStudentName(), // name
+                studentNumber,
+                student.getAge(),
+                level,
+                gender
+        );
+    }
+    
+    private String calculateLevel(Integer age) {
+        if (age == null) return "UNKNOWN";
+        // Approximate level calculation based on age
+        if (age >= 18) return "S6";
+        if (age >= 17) return "S5";
+        if (age >= 16) return "S4";
+        if (age >= 15) return "S3";
+        if (age >= 14) return "S2";
+        if (age >= 13) return "S1";
+        if (age >= 12) return "P6";
+        if (age >= 11) return "P5";
+        if (age >= 10) return "P4";
+        if (age >= 9) return "P3";
+        if (age >= 8) return "P2";
+        if (age >= 7) return "P1";
+        return "NURSERY";
     }
 
     @Override
@@ -49,18 +106,10 @@ public class ParentServiceImpl implements ParentService {
 
     @Override
     public List<NotificationResponse> getParentNotifications(Long parentId) {
-        List<NotificationResponse> notifications = new ArrayList<>();
-        
-        if (parentId == 1) {
-            notifications.add(new NotificationResponse(1L, "Bus Update", "Your child's bus is on the way", "INFO", false));
-            notifications.add(new NotificationResponse(2L, "Arrival Alert", "Bus arriving in 5 minutes", "WARNING", false));
-        } else if (parentId == 2) {
-            notifications.add(new NotificationResponse(3L, "Departure Notice", "Bus has left school", "INFO", true));
-            notifications.add(new NotificationResponse(4L, "Emergency Alert", "Traffic delay expected", "EMERGENCY", false));
-        } else if (parentId == 3) {
-            notifications.add(new NotificationResponse(5L, "Schedule Change", "Bus route updated", "WARNING", false));
-        }
-        
-        return notifications;
+        // DB-backed notifications
+        List<Notification> notifications = notificationRepository.findByUserIdOrderByIdDesc(parentId);
+        return notifications.stream()
+                .map(n -> new NotificationResponse(n.getId(), n.getTitle(), n.getMessage(), n.getType().name(), n.isRead()))
+                .collect(Collectors.toList());
     }
 }

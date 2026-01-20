@@ -82,12 +82,7 @@ public class BusController {
                 bus.setStatus(Bus.Status.ACTIVE);
             }
             
-            if (request.getAssignedDriverId() != null) {
-                @SuppressWarnings("null")
-                Driver driver = driverRepository.findById(request.getAssignedDriverId())
-                    .orElseThrow(() -> new RuntimeException("Driver not found"));
-                bus.setAssignedDriver(driver);
-            }
+            // Note: Driver assignment should be done via PATCH /api/admin/assign-bus-to-driver
             
             Bus savedBus = busRepository.save(bus);
             return ResponseEntity.ok(ApiResponse.success("Bus created successfully", convertToResponse(savedBus)));
@@ -118,14 +113,8 @@ public class BusController {
                 bus.setStatus(Bus.Status.ACTIVE);
             }
             
-            if (request.getAssignedDriverId() != null) {
-                @SuppressWarnings("null")
-                Driver driver = driverRepository.findById(request.getAssignedDriverId())
-                    .orElseThrow(() -> new RuntimeException("Driver not found"));
-                bus.setAssignedDriver(driver);
-            } else {
-                bus.setAssignedDriver(null);
-            }
+            // Note: Driver assignment should be done via PATCH /api/admin/assign-bus-to-driver
+            // We don't remove existing driver assignment here - use the dedicated endpoint
             
             Bus updatedBus = busRepository.save(bus);
             return ResponseEntity.ok(ApiResponse.success("Bus updated successfully", convertToResponse(updatedBus)));
@@ -141,6 +130,14 @@ public class BusController {
         try {
             Bus bus = busRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Bus not found"));
+            
+            // Unassign driver before deleting bus to avoid foreign key constraint violation
+            if (bus.getAssignedDriver() != null) {
+                Driver driver = bus.getAssignedDriver();
+                driver.setAssignedBus(null);
+                driverRepository.save(driver);
+            }
+            
             busRepository.delete(bus);
             return ResponseEntity.ok(ApiResponse.success("Bus deleted successfully", null));
         } catch (Exception e) {

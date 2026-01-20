@@ -21,6 +21,10 @@ public class Student {
     @Column(nullable = false)
     private Integer age;
 
+    @Enumerated(EnumType.STRING)
+    @Column
+    private Gender gender;
+
     @Column(name = "parent_name", nullable = false)
     private String parentName;
 
@@ -52,6 +56,16 @@ public class Student {
         this.address = address;
     }
 
+    public Student(School school, String studentName, Integer age, Gender gender, String parentName, String parentPhone, String address) {
+        this.school = school;
+        this.studentName = studentName;
+        this.age = age;
+        this.gender = gender;
+        this.parentName = parentName;
+        this.parentPhone = parentPhone;
+        this.address = address;
+    }
+
     // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -64,6 +78,9 @@ public class Student {
 
     public Integer getAge() { return age; }
     public void setAge(Integer age) { this.age = age; }
+
+    public Gender getGender() { return gender; }
+    public void setGender(Gender gender) { this.gender = gender; }
 
     public String getParentName() { return parentName; }
     public void setParentName(String parentName) { this.parentName = parentName; }
@@ -84,4 +101,10 @@ public class Student {
 
     @PrePersist
     protected void onCreate() { this.createdAt = LocalDateTime.now(); }
+
+    public enum Gender {
+        MALE,
+        FEMALE,
+        OTHER
+    }
 }

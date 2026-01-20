@@ -42,10 +42,12 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/login","/api/auth/register/parent","api/schools","api/bus-stops", "/api/auth/admin/register","/parent/**", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
-                        .requestMatchers("/api/auth/admin/register").hasRole("ADMIN")
+                        .requestMatchers("/api/auth/login", "/api/auth/register/parent", "/api/admin/register", 
+                                        "api/schools", "api/bus-stops", 
+                                        "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/driver/**").hasRole("DRIVER")
+                        .requestMatchers("/api/parent/**").hasRole("PARENT")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

@@ -14,6 +14,8 @@ public class ChildInfo {
     @NotNull
     private Integer age;
     
+    private String gender;
+    
     @NotNull
     private Long busStopId;
 
@@ -25,6 +27,9 @@ public class ChildInfo {
 
     public Integer getAge() { return age; }
     public void setAge(Integer age) { this.age = age; }
+
+    public String getGender() { return gender; }
+    public void setGender(String gender) { this.gender = gender; }
 
     public Long getBusStopId() { return busStopId; }
     public void setBusStopId(Long busStopId) { this.busStopId = busStopId; }

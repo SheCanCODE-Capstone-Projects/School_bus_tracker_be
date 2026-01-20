@@ -291,11 +291,7 @@ public class AdminActionsController {
                 bus.setStatus(Bus.Status.ACTIVE);
             }
             
-            if (request.getAssignedDriverId() != null) {
-                Driver driver = driverRepository.findById(request.getAssignedDriverId())
-                    .orElseThrow(() -> new RuntimeException("Driver not found"));
-                bus.setAssignedDriver(driver);
-            }
+            // Note: Driver assignment should be done via PATCH /api/admin/assign-bus-to-driver
             
             busRepository.save(bus);
             return ResponseEntity.ok(ApiResponse.success("Bus created successfully", bus));
@@ -318,11 +314,7 @@ public class AdminActionsController {
                 bus.setStatus(Bus.Status.valueOf(request.getStatus().toUpperCase()));
             }
             
-            if (request.getAssignedDriverId() != null) {
-                Driver driver = driverRepository.findById(request.getAssignedDriverId())
-                    .orElseThrow(() -> new RuntimeException("Driver not found"));
-                bus.setAssignedDriver(driver);
-            }
+            // Note: Driver assignment should be done via PATCH /api/admin/assign-bus-to-driver
             
             busRepository.save(bus);
             return ResponseEntity.ok(ApiResponse.success("Bus updated successfully", bus));
@@ -335,6 +327,14 @@ public class AdminActionsController {
     public ResponseEntity<ApiResponse<String>> deleteBus(@PathVariable Long id) {
         try {
             Bus bus = busRepository.findById(id).orElseThrow(() -> new RuntimeException("Bus not found"));
+            
+            // Unassign driver before deleting bus to avoid foreign key constraint violation
+            if (bus.getAssignedDriver() != null) {
+                Driver driver = bus.getAssignedDriver();
+                driver.setAssignedBus(null);
+                driverRepository.save(driver);
+            }
+            
             busRepository.delete(bus);
             return ResponseEntity.ok(ApiResponse.success("Bus deleted successfully", "Bus removed"));
         } catch (Exception e) {

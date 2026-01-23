@@ -24,16 +24,24 @@ public class DriverRequest {
     @Schema(description = "Driver license number", example = "DL123456789")
     private String licenseNumber;
     
+    @Schema(description = "Password (required for creation, optional for update)", example = "password123")
+    private String password;
+    
+    @Schema(description = "School ID", example = "1")
+    private Long schoolId;
+    
     @Schema(description = "Assigned bus ID", example = "1")
     private Long assignedBusId;
     
     public DriverRequest() {}
     
-    public DriverRequest(String fullName, String email, String phoneNumber, String licenseNumber, Long assignedBusId) {
+    public DriverRequest(String fullName, String email, String phoneNumber, String licenseNumber, String password, Long schoolId, Long assignedBusId) {
         this.fullName = fullName;
         this.email = email;
         this.phoneNumber = phoneNumber;
         this.licenseNumber = licenseNumber;
+        this.password = password;
+        this.schoolId = schoolId;
         this.assignedBusId = assignedBusId;
     }
     
@@ -49,6 +57,12 @@ public class DriverRequest {
     
     public String getLicenseNumber() { return licenseNumber; }
     public void setLicenseNumber(String licenseNumber) { this.licenseNumber = licenseNumber; }
+    
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
+    
+    public Long getSchoolId() { return schoolId; }
+    public void setSchoolId(Long schoolId) { this.schoolId = schoolId; }
     
     public Long getAssignedBusId() { return assignedBusId; }
     public void setAssignedBusId(Long assignedBusId) { this.assignedBusId = assignedBusId; }

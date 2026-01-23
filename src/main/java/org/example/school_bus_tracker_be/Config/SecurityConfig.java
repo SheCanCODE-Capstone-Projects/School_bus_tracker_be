@@ -49,7 +49,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/login","/api/auth/password-reset/request","/api/auth/password-reset/confirm", "/api/auth/register/parent", "/api/admin/register",
-                                        "api/schools", "api/bus-stops",
+                                        "api/schools", "api/bus-stops/**",
                                         "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/driver/**").hasRole("DRIVER")

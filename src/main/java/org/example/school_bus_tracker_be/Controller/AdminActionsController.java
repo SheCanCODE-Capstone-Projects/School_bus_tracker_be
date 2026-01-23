@@ -4,6 +4,7 @@ import org.example.school_bus_tracker_be.Config.JwtTokenProvider;
 import org.example.school_bus_tracker_be.DTO.AdminAddStudentRequest;
 import org.example.school_bus_tracker_be.DTO.ApiResponse;
 import org.example.school_bus_tracker_be.Dtos.bus.CreateBusRequest;
+import org.example.school_bus_tracker_be.Dtos.bus.BusResponse;
 import org.example.school_bus_tracker_be.Dtos.student.StudentResponse;
 import org.example.school_bus_tracker_be.Model.*;
 import org.example.school_bus_tracker_be.Repository.*;
@@ -46,6 +47,28 @@ public class AdminActionsController {
         this.driverRepository = driverRepository;
         this.jwtTokenProvider = jwtTokenProvider;
         this.passwordEncoder = passwordEncoder;
+    }
+    
+    private BusResponse convertToBusResponse(Bus bus) {
+        BusResponse.DriverInfo driverInfo = null;
+        if (bus.getAssignedDriver() != null) {
+            driverInfo = new BusResponse.DriverInfo(
+                bus.getAssignedDriver().getFullName(),
+                bus.getAssignedDriver().getEmail(),
+                bus.getAssignedDriver().getPhoneNumber(),
+                bus.getAssignedDriver().getLicenseNumber()
+            );
+        }
+        
+        return new BusResponse(
+            bus.getId(),
+            bus.getBusName(),
+            bus.getBusNumber(),
+            bus.getCapacity(),
+            bus.getRoute(),
+            bus.getStatus() != null ? bus.getStatus().name() : "ACTIVE",
+            driverInfo
+        );
     }
 
     // DRIVER MANAGEMENT
@@ -301,7 +324,7 @@ public class AdminActionsController {
     }
 
     @PutMapping("/buses/{id}")
-    public ResponseEntity<ApiResponse<Bus>> updateBus(@PathVariable Long id, @RequestBody CreateBusRequest request) {
+    public ResponseEntity<ApiResponse<BusResponse>> updateBus(@PathVariable Long id, @RequestBody CreateBusRequest request) {
         try {
             Bus bus = busRepository.findById(id).orElseThrow(() -> new RuntimeException("Bus not found"));
             
@@ -311,13 +334,19 @@ public class AdminActionsController {
             if (request.getRoute() != null) bus.setRoute(request.getRoute());
             
             if (request.getStatus() != null) {
-                bus.setStatus(Bus.Status.valueOf(request.getStatus().toUpperCase()));
+                try {
+                    bus.setStatus(Bus.Status.valueOf(request.getStatus().toUpperCase()));
+                } catch (IllegalArgumentException e) {
+                    // Invalid status, keep existing status
+                }
             }
             
             // Note: Driver assignment should be done via PATCH /api/admin/assign-bus-to-driver
+            // We don't remove existing driver assignment here - use the dedicated endpoint
             
-            busRepository.save(bus);
-            return ResponseEntity.ok(ApiResponse.success("Bus updated successfully", bus));
+            Bus updatedBus = busRepository.save(bus);
+            BusResponse busResponse = convertToBusResponse(updatedBus);
+            return ResponseEntity.ok(ApiResponse.success("Bus updated successfully", busResponse));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
@@ -334,6 +363,17 @@ public class AdminActionsController {
                 driver.setAssignedBus(null);
                 driverRepository.save(driver);
             }
+            
+            // Unassign students from bus to avoid foreign key constraint violation
+            List<Student> students = studentRepository.findByAssignedBusId(id);
+            for (Student student : students) {
+                student.setAssignedBus(null);
+                studentRepository.save(student);
+            }
+            
+            // Note: Bus locations, tracking records, and emergencies are kept for audit/history purposes
+            // They reference the bus but won't cause foreign key violations if we handle them properly
+            // The database should have ON DELETE SET NULL or similar for these relationships
             
             busRepository.delete(bus);
             return ResponseEntity.ok(ApiResponse.success("Bus deleted successfully", "Bus removed"));

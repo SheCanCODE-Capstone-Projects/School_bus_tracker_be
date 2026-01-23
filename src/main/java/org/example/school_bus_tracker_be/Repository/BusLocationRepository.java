@@ -25,4 +25,8 @@ public interface BusLocationRepository extends JpaRepository<BusLocation, Long> 
     
     @Query(value = "SELECT * FROM bus_locations WHERE bus_id = :busId ORDER BY recorded_at DESC LIMIT 1", nativeQuery = true)
     Optional<BusLocation> findLatestByBusId(@Param("busId") Long busId);
+    
+    // Find all locations for a bus
+    @Query("SELECT bl FROM BusLocation bl WHERE bl.bus.id = :busId")
+    List<BusLocation> findByBusId(@Param("busId") Long busId);
 }

@@ -10,6 +10,8 @@ import org.example.school_bus_tracker_be.DTO.ApiResponse;
 import org.example.school_bus_tracker_be.DTO.StudentSimpleResponse;
 import org.example.school_bus_tracker_be.Dtos.auth.AuthResponse;
 import org.example.school_bus_tracker_be.Dtos.bus.BusResponse;
+import org.example.school_bus_tracker_be.Dtos.driver.DriverResponse;
+import org.example.school_bus_tracker_be.Model.Driver;
 import org.example.school_bus_tracker_be.Model.User;
 import org.example.school_bus_tracker_be.Model.Student;
 import org.example.school_bus_tracker_be.Model.Bus;
@@ -49,14 +51,27 @@ public class AdminController {
 
     @PostMapping("/add-driver")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<User>> addDriver(@Valid @RequestBody AdminAddDriverRequest request, HttpServletRequest httpRequest) {
+    public ResponseEntity<ApiResponse<DriverResponse>> addDriver(@Valid @RequestBody AdminAddDriverRequest request, HttpServletRequest httpRequest) {
         try {
             Long adminId = getCurrentUserId(httpRequest);
-            User driver = authService.addDriverByAdmin(request, adminId);
-            return ResponseEntity.ok(ApiResponse.success("Driver added successfully", driver));
+            Driver driver = authService.addDriverByAdmin(request, adminId);
+            DriverResponse driverResponse = convertToDriverResponse(driver);
+            return ResponseEntity.ok(ApiResponse.success("Driver added successfully", driverResponse));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
+    }
+    
+    private DriverResponse convertToDriverResponse(Driver driver) {
+        return new DriverResponse(
+            driver.getId(),
+            driver.getSchool().getId(),
+            driver.getFullName(),
+            driver.getEmail(),
+            driver.getPhoneNumber(),
+            driver.getLicenseNumber(),
+            driver.getAssignedBus() != null ? driver.getAssignedBus().getId() : null
+        );
     }
 
     @PostMapping("/add-student")
@@ -101,6 +116,7 @@ public class AdminController {
             bus.getBusNumber(),
             bus.getCapacity(),
             bus.getRoute(),
+            bus.getStatus() != null ? bus.getStatus().name() : "ACTIVE",
             driverInfo
         );
     }

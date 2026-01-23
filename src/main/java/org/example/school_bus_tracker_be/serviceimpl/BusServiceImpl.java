@@ -48,29 +48,9 @@ public class BusServiceImpl implements BusService {
             throw new RuntimeException("Only admins can assign buses to drivers");
         }
 
-        // Get driver user (driverId is actually userId)
-        User driverUser = userRepository.findById(request.getDriverId())
-                .orElseThrow(() -> new RuntimeException("Driver user not found with ID: " + request.getDriverId()));
-
-        if (!driverUser.getRole().equals(Role.DRIVER)) {
-            throw new RuntimeException("User with ID " + request.getDriverId() + " is not a driver");
-        }
-
-        // Get or create Driver entity
-        Driver driver = driverRepository.findByEmail(driverUser.getEmail())
-                .orElse(null);
-
-        if (driver == null) {
-            // Create Driver entity if it doesn't exist
-            driver = new Driver(
-                    driverUser.getSchool(),
-                    driverUser.getName(),
-                    driverUser.getEmail(),
-                    driverUser.getPhone(),
-                    "DL" + System.currentTimeMillis() // Generate license number
-            );
-            driver = driverRepository.save(driver);
-        }
+        // Get driver from drivers table (driverId is the driver entity ID, not userId)
+        Driver driver = driverRepository.findById(request.getDriverId())
+                .orElseThrow(() -> new RuntimeException("Driver not found with ID: " + request.getDriverId()));
 
         // Get bus
         Bus bus = busRepository.findById(request.getBusId())

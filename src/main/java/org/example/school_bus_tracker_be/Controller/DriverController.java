@@ -6,9 +6,13 @@ import org.example.school_bus_tracker_be.Dtos.driver.DriverResponse;
 import org.example.school_bus_tracker_be.Model.Driver;
 import org.example.school_bus_tracker_be.Model.Bus;
 import org.example.school_bus_tracker_be.Model.School;
+import org.example.school_bus_tracker_be.Model.User;
 import org.example.school_bus_tracker_be.Repository.DriverRepository;
 import org.example.school_bus_tracker_be.Repository.BusRepository;
 import org.example.school_bus_tracker_be.Repository.SchoolRepository;
+import org.example.school_bus_tracker_be.Repository.UserRepository;
+import org.example.school_bus_tracker_be.Enum.Role;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -25,12 +29,17 @@ public class DriverController {
     private final DriverRepository driverRepository;
     private final SchoolRepository schoolRepository;
     private final BusRepository busRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public DriverController(DriverRepository driverRepository, SchoolRepository schoolRepository,
-                          BusRepository busRepository) {
+                          BusRepository busRepository, UserRepository userRepository,
+                          PasswordEncoder passwordEncoder) {
         this.driverRepository = driverRepository;
         this.schoolRepository = schoolRepository;
         this.busRepository = busRepository;
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @GetMapping
@@ -62,9 +71,13 @@ public class DriverController {
     @PostMapping
     @Operation(summary = "Create new driver", description = "Create a new driver")
     public ResponseEntity<ApiResponse<DriverResponse>> createDriver(
-            @Valid @RequestBody DriverRequest request,
-            @RequestParam Long schoolId) {
+            @Valid @RequestBody DriverRequest request) {
         try {
+            // Validate required fields
+            if (request.getSchoolId() == null) {
+                return ResponseEntity.badRequest().body(ApiResponse.error("School ID is required"));
+            }
+            
             // Check if email already exists
             if (driverRepository.existsByEmail(request.getEmail())) {
                 return ResponseEntity.badRequest().body(ApiResponse.error("Email already exists"));
@@ -80,9 +93,27 @@ public class DriverController {
                 return ResponseEntity.badRequest().body(ApiResponse.error("License number already exists"));
             }
             
-            School school = schoolRepository.findById(schoolId)
+            School school = schoolRepository.findById(request.getSchoolId())
                 .orElseThrow(() -> new RuntimeException("School not found"));
             
+            // Create User entity if password is provided
+            if (request.getPassword() != null && !request.getPassword().isEmpty()) {
+                if (userRepository.existsByEmail(request.getEmail())) {
+                    return ResponseEntity.badRequest().body(ApiResponse.error("User with this email already exists"));
+                }
+                
+                User driverUser = new User(
+                    school,
+                    request.getFullName(),
+                    request.getEmail(),
+                    passwordEncoder.encode(request.getPassword()),
+                    request.getPhoneNumber(),
+                    Role.DRIVER
+                );
+                userRepository.save(driverUser);
+            }
+            
+            // Create Driver entity
             Driver driver = new Driver();
             driver.setSchool(school);
             driver.setFullName(request.getFullName());
@@ -129,6 +160,13 @@ public class DriverController {
                 return ResponseEntity.badRequest().body(ApiResponse.error("License number already exists"));
             }
             
+            // Update school if provided
+            if (request.getSchoolId() != null && !driver.getSchool().getId().equals(request.getSchoolId())) {
+                School school = schoolRepository.findById(request.getSchoolId())
+                    .orElseThrow(() -> new RuntimeException("School not found"));
+                driver.setSchool(school);
+            }
+            
             driver.setFullName(request.getFullName());
             driver.setEmail(request.getEmail());
             driver.setPhoneNumber(request.getPhoneNumber());
@@ -140,6 +178,18 @@ public class DriverController {
                 driver.setAssignedBus(bus);
             } else {
                 driver.setAssignedBus(null);
+            }
+            
+            // Update User entity if password is provided
+            if (request.getPassword() != null && !request.getPassword().isEmpty()) {
+                User driverUser = userRepository.findByEmail(driver.getEmail()).orElse(null);
+                if (driverUser != null) {
+                    driverUser.setPassword(passwordEncoder.encode(request.getPassword()));
+                    if (request.getFullName() != null) driverUser.setName(request.getFullName());
+                    if (request.getEmail() != null) driverUser.setEmail(request.getEmail());
+                    if (request.getPhoneNumber() != null) driverUser.setPhone(request.getPhoneNumber());
+                    userRepository.save(driverUser);
+                }
             }
             
             Driver updatedDriver = driverRepository.save(driver);

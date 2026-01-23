@@ -141,9 +141,25 @@ public class AuthServiceImpl implements AuthService {
         // Create children if provided
         if (request.getChildren() != null && !request.getChildren().isEmpty()) {
             for (ChildInfo child : request.getChildren()) {
+                // Validate that busStopId exists and belongs to the same school
+                if (child.getBusStopId() == null) {
+                    throw new RuntimeException("Bus stop ID is required for child: " + child.getFullName());
+                }
+                
                 BusStop busStop = busStopRepository
                         .findById(child.getBusStopId())
-                        .orElse(null);
+                        .orElseThrow(() -> new RuntimeException(
+                                "Bus stop not found with ID: " + child.getBusStopId() + 
+                                " for child: " + child.getFullName() + 
+                                ". Please provide a valid bus stop ID."));
+                
+                // Verify bus stop belongs to the same school
+                if (!busStop.getSchool().getId().equals(school.getId())) {
+                    throw new RuntimeException(
+                            "Bus stop with ID: " + child.getBusStopId() + 
+                            " does not belong to school ID: " + school.getId() + 
+                            " for child: " + child.getFullName());
+                }
 
                 Student.Gender genderEnum = null;
                 if (child.getGender() != null && !child.getGender().isEmpty()) {
@@ -164,9 +180,8 @@ public class AuthServiceImpl implements AuthService {
                         request.getHomeAddress() != null ? request.getHomeAddress() : "" // address
                 );
                 
-                if (busStop != null) {
-                    student.setBusStop(busStop);
-                }
+                // Set bus stop (it's validated above)
+                student.setBusStop(busStop);
 
                 studentRepository.save(student);
             }
@@ -201,7 +216,7 @@ public class AuthServiceImpl implements AuthService {
 
     // ADMIN ADD DRIVER
     @Override
-    public User addDriverByAdmin(AdminAddDriverRequest request, Long adminId) {
+    public Driver addDriverByAdmin(AdminAddDriverRequest request, Long adminId) {
         User admin = userRepository.findById(adminId)
                 .orElseThrow(() -> new RuntimeException("Admin not found"));
         
@@ -237,15 +252,17 @@ public class AuthServiceImpl implements AuthService {
                 request.getLicenseNumber() != null ? request.getLicenseNumber() : "DL" + System.currentTimeMillis()
         );
         
-        if (request.getAssignedBusId() != null) {
+        // Only assign bus if assignedBusId is provided and is greater than 0
+        if (request.getAssignedBusId() != null && request.getAssignedBusId() > 0) {
             Bus bus = busRepository.findById(request.getAssignedBusId())
                     .orElseThrow(() -> new RuntimeException("Bus not found"));
             driver.setAssignedBus(bus);
         }
+        // If assignedBusId is null or 0, driver is created without assigned bus
         
         driverRepository.save(driver);
 
-        return driverUser;
+        return driver;
     }
 
     // ADMIN ADD STUDENT
@@ -309,8 +326,11 @@ public class AuthServiceImpl implements AuthService {
                         new RuntimeException("User not found with email: " + request.getEmail())
                 );
 
-        // Delete any existing reset tokens for this user
-        passwordResetTokenRepository.deleteByUser(user);
+        // Delete any existing reset tokens for this user (by userId to avoid constraint issues)
+        passwordResetTokenRepository.deleteByUserId(user.getId());
+        
+        // Flush to ensure deletion is committed before insert
+        passwordResetTokenRepository.flush();
 
         // Generate 6-digit verification code
         String code = generateVerificationCode();

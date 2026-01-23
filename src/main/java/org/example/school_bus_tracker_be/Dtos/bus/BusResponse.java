@@ -20,17 +20,21 @@ public class BusResponse {
     @Schema(description = "Bus route", example = "Route 1: Downtown - School")
     private String route;
     
+    @Schema(description = "Bus status", example = "ACTIVE")
+    private String status;
+    
     @Schema(description = "Assigned driver details")
     private DriverInfo assignedDriver;
     
     public BusResponse() {}
     
-    public BusResponse(Long id, String busName, String busNumber, Integer capacity, String route, DriverInfo assignedDriver) {
+    public BusResponse(Long id, String busName, String busNumber, Integer capacity, String route, String status, DriverInfo assignedDriver) {
         this.id = id;
         this.busName = busName;
         this.busNumber = busNumber;
         this.capacity = capacity;
         this.route = route;
+        this.status = status;
         this.assignedDriver = assignedDriver;
     }
     
@@ -49,6 +53,9 @@ public class BusResponse {
     
     public String getRoute() { return route; }
     public void setRoute(String route) { this.route = route; }
+    
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
     
     public DriverInfo getAssignedDriver() { return assignedDriver; }
     public void setAssignedDriver(DriverInfo assignedDriver) { this.assignedDriver = assignedDriver; }

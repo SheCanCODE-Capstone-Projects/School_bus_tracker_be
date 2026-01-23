@@ -9,6 +9,8 @@ import org.example.school_bus_tracker_be.Model.School;
 import org.example.school_bus_tracker_be.Repository.BusRepository;
 import org.example.school_bus_tracker_be.Repository.DriverRepository;
 import org.example.school_bus_tracker_be.Repository.SchoolRepository;
+import org.example.school_bus_tracker_be.Repository.StudentRepository;
+import org.example.school_bus_tracker_be.Model.Student;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -25,12 +27,14 @@ public class BusController {
     private final BusRepository busRepository;
     private final SchoolRepository schoolRepository;
     private final DriverRepository driverRepository;
+    private final StudentRepository studentRepository;
 
     public BusController(BusRepository busRepository, SchoolRepository schoolRepository,
-                       DriverRepository driverRepository) {
+                       DriverRepository driverRepository, StudentRepository studentRepository) {
         this.busRepository = busRepository;
         this.schoolRepository = schoolRepository;
         this.driverRepository = driverRepository;
+        this.studentRepository = studentRepository;
     }
 
     @GetMapping
@@ -138,6 +142,17 @@ public class BusController {
                 driverRepository.save(driver);
             }
             
+            // Unassign students from bus to avoid foreign key constraint violation
+            List<Student> students = studentRepository.findByAssignedBusId(id);
+            for (Student student : students) {
+                student.setAssignedBus(null);
+                studentRepository.save(student);
+            }
+            
+            // Note: Bus locations, tracking records, and emergencies are kept for audit/history purposes
+            // They reference the bus but won't cause foreign key violations if we handle them properly
+            // The database should have ON DELETE SET NULL or similar for these relationships
+            
             busRepository.delete(bus);
             return ResponseEntity.ok(ApiResponse.success("Bus deleted successfully", null));
         } catch (Exception e) {
@@ -162,6 +177,7 @@ public class BusController {
             bus.getBusNumber(),
             bus.getCapacity(),
             bus.getRoute(),
+            bus.getStatus() != null ? bus.getStatus().name() : "ACTIVE",
             driverInfo
         );
     }

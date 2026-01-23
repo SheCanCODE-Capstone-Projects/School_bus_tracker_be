@@ -14,6 +14,9 @@ public class PasswordResetToken {
     @Column(nullable = false, unique = true)
     private String code; // Changed from token to code (6-digit verification code)
 
+    @Column(name = "token", nullable = false)
+    private String token; // Legacy field - kept for database compatibility, set to same as code
+
     @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -28,6 +31,7 @@ public class PasswordResetToken {
 
     public PasswordResetToken(String code, User user, LocalDateTime expiryDate) {
         this.code = code;
+        this.token = code; // Set token to same value as code for database compatibility
         this.user = user;
         this.expiryDate = expiryDate;
     }
@@ -37,7 +41,13 @@ public class PasswordResetToken {
     public void setId(Long id) { this.id = id; }
 
     public String getCode() { return code; }
-    public void setCode(String code) { this.code = code; }
+    public void setCode(String code) { 
+        this.code = code;
+        this.token = code; // Keep token in sync with code
+    }
+
+    public String getToken() { return token; }
+    public void setToken(String token) { this.token = token; }
 
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }

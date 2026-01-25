@@ -70,6 +70,10 @@ public class LocationServiceImpl implements LocationService {
         BusTracking tracking = new BusTracking(bus, driverUser, BusTracking.Status.ACTIVE);
         tracking.setStartedAt(LocalDateTime.now());
         busTrackingRepository.save(tracking);
+
+        // Update bus status to ON_ROUTE
+        bus.setStatus(Bus.Status.ON_ROUTE);
+        busRepository.save(bus);
     }
 
     @Override
@@ -136,6 +140,13 @@ public class LocationServiceImpl implements LocationService {
         tracking.setStatus(BusTracking.Status.STOPPED);
         tracking.setStoppedAt(LocalDateTime.now());
         busTrackingRepository.save(tracking);
+
+        // Update bus status back to ACTIVE (no longer on route)
+        Bus bus = tracking.getBus();
+        if (bus != null) {
+            bus.setStatus(Bus.Status.ACTIVE);
+            busRepository.save(bus);
+        }
     }
 
     @Override

@@ -21,6 +21,9 @@ public class DriverRegisterRequest {
     
     @NotBlank
     private String phone;
+    
+    @NotBlank
+    private String licenseNumber;
 
     public Long getSchoolId() { return schoolId; }
     public void setSchoolId(Long schoolId) { this.schoolId = schoolId; }
@@ -32,4 +35,7 @@ public class DriverRegisterRequest {
     public void setPassword(String password) { this.password = password; }
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
+    
+    public String getLicenseNumber() { return licenseNumber; }
+    public void setLicenseNumber(String licenseNumber) { this.licenseNumber = licenseNumber; }
 }

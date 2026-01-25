@@ -99,7 +99,8 @@ public class Bus {
     public enum Status {
         ACTIVE,
         INACTIVE,
-        MAINTENANCE
+        MAINTENANCE,
+        ON_ROUTE
     }
 
 

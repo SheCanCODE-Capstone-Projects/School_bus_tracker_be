@@ -97,13 +97,20 @@ public class AuthServiceImpl implements AuthService {
 
     // REGISTER DRIVER
     @Override
+    @Transactional
     public AuthResponse registerDriver(DriverRegisterRequest request) {
         validateUser(request.getEmail(), request.getPhone());
+        
+        // Validate license number is unique
+        if (driverRepository.existsByLicenseNumber(request.getLicenseNumber())) {
+            throw new RuntimeException("License number already exists");
+        }
 
         School school = schoolRepository.findById(request.getSchoolId())
                 .orElseThrow(() -> new RuntimeException("School not found"));
 
-        User driver = new User(
+        // Create User entity for authentication
+        User driverUser = new User(
                 school,
                 request.getName(),
                 request.getEmail(),
@@ -112,10 +119,21 @@ public class AuthServiceImpl implements AuthService {
                 Role.DRIVER
         );
 
-        userRepository.save(driver);
+        userRepository.save(driverUser);
+        
+        // Also create Driver entity with license number
+        Driver driver = new Driver(
+                school,
+                request.getName(),
+                request.getEmail(),
+                request.getPhone(),
+                request.getLicenseNumber()
+        );
+        
+        driverRepository.save(driver);
 
-        String token = tokenProvider.generateToken(driver);
-        return new AuthResponse(token, tokenProvider.getJwtExpirationMs(), driver.getRole().name());
+        String token = tokenProvider.generateToken(driverUser);
+        return new AuthResponse(token, tokenProvider.getJwtExpirationMs(), driverUser.getRole().name());
     }
 
     // REGISTER PARENT

@@ -1,6 +1,7 @@
 package org.example.school_bus_tracker_be.Controller;
 
 import org.example.school_bus_tracker_be.DTO.ApiResponse;
+import org.example.school_bus_tracker_be.DTO.UpdateBusStatusRequest;
 import org.example.school_bus_tracker_be.Dtos.bus.CreateBusRequest;
 import org.example.school_bus_tracker_be.Dtos.bus.BusResponse;
 import org.example.school_bus_tracker_be.Model.Bus;
@@ -122,6 +123,32 @@ public class BusController {
             
             Bus updatedBus = busRepository.save(bus);
             return ResponseEntity.ok(ApiResponse.success("Bus updated successfully", convertToResponse(updatedBus)));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @PatchMapping("/{id}/status")
+    @Operation(summary = "Update bus status", description = "Update only the status of a bus (e.g., ACTIVE, INACTIVE, MAINTENANCE, ON_ROUTE)")
+    @SuppressWarnings("null")
+    public ResponseEntity<ApiResponse<BusResponse>> updateBusStatus(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateBusStatusRequest request) {
+        try {
+            Bus bus = busRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Bus not found"));
+            
+            // Validate and set status
+            try {
+                Bus.Status newStatus = Bus.Status.valueOf(request.getStatus().toUpperCase());
+                bus.setStatus(newStatus);
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.badRequest().body(
+                    ApiResponse.error("Invalid status. Valid values are: ACTIVE, INACTIVE, MAINTENANCE, ON_ROUTE"));
+            }
+            
+            Bus updatedBus = busRepository.save(bus);
+            return ResponseEntity.ok(ApiResponse.success("Bus status updated successfully", convertToResponse(updatedBus)));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }

@@ -166,16 +166,9 @@ public class AdminController {
                         parent.getSchool().getId()
                 );
                 
-                // Convert students to StudentResponse
-                java.util.List<org.example.school_bus_tracker_be.DTO.StudentResponse> studentResponses = students.stream()
-                        .map(s -> new org.example.school_bus_tracker_be.DTO.StudentResponse(
-                                s.getId(),
-                                s.getStudentName(),
-                                "ST" + String.format("%03d", s.getId()), // student number
-                                s.getAge(),
-                                calculateLevel(s.getAge()),
-                                s.getGender() != null ? s.getGender().name() : "UNKNOWN"
-                        ))
+                // Convert students to StudentResponse with full details
+                java.util.List<org.example.school_bus_tracker_be.Dtos.student.StudentResponse> studentResponses = students.stream()
+                        .map(this::convertStudentToResponse)
                         .collect(Collectors.toList());
                 
                 ParentWithStudentsResponse parentResponse = new ParentWithStudentsResponse(
@@ -197,21 +190,42 @@ public class AdminController {
         }
     }
     
-    private String calculateLevel(Integer age) {
-        if (age == null) return "UNKNOWN";
-        if (age >= 18) return "S6";
-        if (age >= 17) return "S5";
-        if (age >= 16) return "S4";
-        if (age >= 15) return "S3";
-        if (age >= 14) return "S2";
-        if (age >= 13) return "S1";
-        if (age >= 12) return "P6";
-        if (age >= 11) return "P5";
-        if (age >= 10) return "P4";
-        if (age >= 9) return "P3";
-        if (age >= 8) return "P2";
-        if (age >= 7) return "P1";
-        return "NURSERY";
+    private org.example.school_bus_tracker_be.Dtos.student.StudentResponse convertStudentToResponse(Student student) {
+        // Convert BusStop to BusStopInfo
+        org.example.school_bus_tracker_be.Dtos.student.StudentResponse.BusStopInfo busStopInfo = null;
+        if (student.getBusStop() != null) {
+            String busStopAddress = student.getBusStop().getLatitude() + ", " + student.getBusStop().getLongitude();
+            busStopInfo = new org.example.school_bus_tracker_be.Dtos.student.StudentResponse.BusStopInfo(
+                    student.getBusStop().getName(),
+                    busStopAddress
+            );
+        }
+        
+        // Convert Bus to AssignedBusInfo
+        org.example.school_bus_tracker_be.Dtos.student.StudentResponse.AssignedBusInfo busInfo = null;
+        if (student.getAssignedBus() != null) {
+            busInfo = new org.example.school_bus_tracker_be.Dtos.student.StudentResponse.AssignedBusInfo(
+                    student.getAssignedBus().getBusName(),
+                    student.getAssignedBus().getBusNumber()
+            );
+        }
+        
+        // Create StudentResponse
+        org.example.school_bus_tracker_be.Dtos.student.StudentResponse response = new org.example.school_bus_tracker_be.Dtos.student.StudentResponse(
+                student.getId(),
+                student.getStudentName(),
+                student.getAge(),
+                student.getParentName(),
+                student.getParentPhone(),
+                student.getAddress(),
+                busStopInfo,
+                busInfo
+        );
+        
+        // Set school_id
+        response.setSchoolId(student.getSchool().getId());
+        
+        return response;
     }
 
     private Long getCurrentUserId(HttpServletRequest request) {

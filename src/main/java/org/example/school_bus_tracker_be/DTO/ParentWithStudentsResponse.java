@@ -1,5 +1,6 @@
 package org.example.school_bus_tracker_be.DTO;
 
+import org.example.school_bus_tracker_be.Dtos.student.StudentResponse;
 import java.util.List;
 
 public class ParentWithStudentsResponse {

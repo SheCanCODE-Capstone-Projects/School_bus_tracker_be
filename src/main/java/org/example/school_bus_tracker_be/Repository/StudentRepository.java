@@ -23,8 +23,12 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
     // Find students by parent name
     List<Student> findByParentName(String parentName);
     
-    // Find students by parent phone and school
-    @Query("SELECT s FROM Student s WHERE s.parentPhone = :parentPhone AND s.school.id = :schoolId")
+    // Find students by parent phone and school (with eager loading of relationships)
+    @Query("SELECT DISTINCT s FROM Student s " +
+           "LEFT JOIN FETCH s.busStop " +
+           "LEFT JOIN FETCH s.assignedBus " +
+           "LEFT JOIN FETCH s.school " +
+           "WHERE s.parentPhone = :parentPhone AND s.school.id = :schoolId")
     List<Student> findByParentPhoneAndSchoolId(@Param("parentPhone") String parentPhone, @Param("schoolId") Long schoolId);
     
     // Find students by parent name and school

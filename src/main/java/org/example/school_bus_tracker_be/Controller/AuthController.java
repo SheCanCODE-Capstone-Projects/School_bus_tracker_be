@@ -72,8 +72,9 @@ public class AuthController {
             // Generate JWT token
             String jwt = tokenProvider.generateToken(user);
 
-            // Create login response
+            // Create login response (include user id for frontend)
             LoginResponse loginResponse = new LoginResponse(
+                    user.getId(),
                     jwt,
                     "Bearer",
                     tokenProvider.getJwtExpirationMs(),

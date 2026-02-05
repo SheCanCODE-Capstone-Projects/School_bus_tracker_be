@@ -92,7 +92,7 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + request.getEmail()));
 
         String token = tokenProvider.generateToken(user);
-        return new AuthResponse(token, tokenProvider.getJwtExpirationMs(), user.getRole().name());
+        return new AuthResponse(user.getId(), token, tokenProvider.getJwtExpirationMs(), user.getRole().name());
     }
 
     // REGISTER DRIVER
@@ -133,7 +133,7 @@ public class AuthServiceImpl implements AuthService {
         driverRepository.save(driver);
 
         String token = tokenProvider.generateToken(driverUser);
-        return new AuthResponse(token, tokenProvider.getJwtExpirationMs(), driverUser.getRole().name());
+        return new AuthResponse(driverUser.getId(), token, tokenProvider.getJwtExpirationMs(), driverUser.getRole().name());
     }
 
     // REGISTER PARENT
@@ -206,7 +206,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         String token = tokenProvider.generateToken(parent);
-        return new AuthResponse(token, tokenProvider.getJwtExpirationMs(), parent.getRole().name());
+        return new AuthResponse(parent.getId(), token, tokenProvider.getJwtExpirationMs(), parent.getRole().name());
     }
 
     // REGISTER ADMIN
@@ -229,7 +229,7 @@ public class AuthServiceImpl implements AuthService {
         userRepository.save(admin);
 
         String token = tokenProvider.generateToken(admin);
-        return new AuthResponse(token, tokenProvider.getJwtExpirationMs(), admin.getRole().name());
+        return new AuthResponse(admin.getId(), token, tokenProvider.getJwtExpirationMs(), admin.getRole().name());
     }
 
     // ADMIN ADD DRIVER

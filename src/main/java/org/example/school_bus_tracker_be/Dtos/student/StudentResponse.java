@@ -77,6 +77,9 @@ public class StudentResponse {
     
     @Schema(description = "Bus stop information")
     public static class BusStopInfo {
+        @Schema(description = "Bus stop ID", example = "1")
+        private Long id;
+        
         @Schema(description = "Bus stop name", example = "Main Street Stop")
         private String stopName;
         
@@ -85,10 +88,14 @@ public class StudentResponse {
         
         public BusStopInfo() {}
         
-        public BusStopInfo(String stopName, String address) {
+        public BusStopInfo(Long id, String stopName, String address) {
+            this.id = id;
             this.stopName = stopName;
             this.address = address;
         }
+        
+        public Long getId() { return id; }
+        public void setId(Long id) { this.id = id; }
         
         public String getStopName() { return stopName; }
         public void setStopName(String stopName) { this.stopName = stopName; }
@@ -99,6 +106,9 @@ public class StudentResponse {
     
     @Schema(description = "Assigned bus information")
     public static class AssignedBusInfo {
+        @Schema(description = "Bus ID", example = "1")
+        private Long id;
+        
         @Schema(description = "Bus name", example = "School Bus A")
         private String busName;
         
@@ -107,10 +117,14 @@ public class StudentResponse {
         
         public AssignedBusInfo() {}
         
-        public AssignedBusInfo(String busName, String busNumber) {
+        public AssignedBusInfo(Long id, String busName, String busNumber) {
+            this.id = id;
             this.busName = busName;
             this.busNumber = busNumber;
         }
+        
+        public Long getId() { return id; }
+        public void setId(Long id) { this.id = id; }
         
         public String getBusName() { return busName; }
         public void setBusName(String busName) { this.busName = busName; }

@@ -153,6 +153,7 @@ public class StudentController {
         StudentResponse.BusStopInfo busStopInfo = null;
         if (student.getBusStop() != null) {
             busStopInfo = new StudentResponse.BusStopInfo(
+                student.getBusStop().getId(),
                 student.getBusStop().getName(),
                 student.getBusStop().getLatitude() + ", " + student.getBusStop().getLongitude()
             );
@@ -161,6 +162,7 @@ public class StudentController {
         StudentResponse.AssignedBusInfo busInfo = null;
         if (student.getAssignedBus() != null) {
             busInfo = new StudentResponse.AssignedBusInfo(
+                student.getAssignedBus().getId(),
                 student.getAssignedBus().getBusName(),
                 student.getAssignedBus().getBusNumber()
             );

@@ -1,6 +1,7 @@
 package org.example.school_bus_tracker_be.DTO;
 
 public class LoginResponse {
+    private Long id;
     private String token;
     private String type = "Bearer";
     private Long expiresIn;
@@ -11,6 +12,11 @@ public class LoginResponse {
     public LoginResponse() {}
 
     public LoginResponse(String token, String type, Long expiresIn, String email, String role) {
+        this(null, token, type, expiresIn, email, role);
+    }
+
+    public LoginResponse(Long id, String token, String type, Long expiresIn, String email, String role) {
+        this.id = id;
         this.token = token;
         this.type = type;
         this.expiresIn = expiresIn;
@@ -19,6 +25,14 @@ public class LoginResponse {
     }
 
     // Getters and Setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public String getToken() {
         return token;
     }

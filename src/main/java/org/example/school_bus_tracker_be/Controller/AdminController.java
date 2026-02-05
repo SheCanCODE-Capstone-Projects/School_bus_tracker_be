@@ -196,6 +196,7 @@ public class AdminController {
         if (student.getBusStop() != null) {
             String busStopAddress = student.getBusStop().getLatitude() + ", " + student.getBusStop().getLongitude();
             busStopInfo = new org.example.school_bus_tracker_be.Dtos.student.StudentResponse.BusStopInfo(
+                    student.getBusStop().getId(),
                     student.getBusStop().getName(),
                     busStopAddress
             );
@@ -205,6 +206,7 @@ public class AdminController {
         org.example.school_bus_tracker_be.Dtos.student.StudentResponse.AssignedBusInfo busInfo = null;
         if (student.getAssignedBus() != null) {
             busInfo = new org.example.school_bus_tracker_be.Dtos.student.StudentResponse.AssignedBusInfo(
+                    student.getAssignedBus().getId(),
                     student.getAssignedBus().getBusName(),
                     student.getAssignedBus().getBusNumber()
             );

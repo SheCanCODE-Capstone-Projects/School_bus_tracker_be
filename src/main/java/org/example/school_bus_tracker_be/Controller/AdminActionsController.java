@@ -170,12 +170,12 @@ public class AdminActionsController {
 
             StudentResponse.BusStopInfo bsInfo = null;
             if (saved.getBusStop() != null) {
-                bsInfo = new StudentResponse.BusStopInfo(saved.getBusStop().getName(), null);
+                bsInfo = new StudentResponse.BusStopInfo(saved.getBusStop().getId(), saved.getBusStop().getName(), null);
             }
 
             StudentResponse.AssignedBusInfo abInfo = null;
             if (saved.getAssignedBus() != null) {
-                abInfo = new StudentResponse.AssignedBusInfo(saved.getAssignedBus().getBusName(), saved.getAssignedBus().getBusNumber());
+                abInfo = new StudentResponse.AssignedBusInfo(saved.getAssignedBus().getId(), saved.getAssignedBus().getBusName(), saved.getAssignedBus().getBusNumber());
             }
 
             StudentResponse resp = new StudentResponse(

@@ -58,6 +58,7 @@ public class ParentServiceImpl implements ParentService {
         if (student.getBusStop() != null) {
             String busStopAddress = student.getBusStop().getLatitude() + ", " + student.getBusStop().getLongitude();
             busStopInfo = new StudentResponse.BusStopInfo(
+                    student.getBusStop().getId(),
                     student.getBusStop().getName(),
                     busStopAddress
             );
@@ -67,6 +68,7 @@ public class ParentServiceImpl implements ParentService {
         StudentResponse.AssignedBusInfo busInfo = null;
         if (student.getAssignedBus() != null) {
             busInfo = new StudentResponse.AssignedBusInfo(
+                    student.getAssignedBus().getId(),
                     student.getAssignedBus().getBusName(),
                     student.getAssignedBus().getBusNumber()
             );

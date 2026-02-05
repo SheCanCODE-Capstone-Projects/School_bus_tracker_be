@@ -2,6 +2,7 @@ package org.example.school_bus_tracker_be.Service;
 
 import org.example.school_bus_tracker_be.DTO.*;
 import org.example.school_bus_tracker_be.Dtos.auth.AuthResponse;
+import org.example.school_bus_tracker_be.Dtos.student.StudentResponse;
 import java.util.List;
 
 public interface ParentService {

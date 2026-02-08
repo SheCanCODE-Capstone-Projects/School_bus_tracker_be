@@ -5,6 +5,7 @@ import org.example.school_bus_tracker_be.DTO.SimpleApiResponse;
 import org.example.school_bus_tracker_be.Dtos.emergency.*;
 import org.example.school_bus_tracker_be.Model.Emergency;
 import org.example.school_bus_tracker_be.Service.EmergencyService;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -28,11 +29,38 @@ public class EmergencyController {
 
     /**
      * POST /driver/emergencies
-     * Driver reports an emergency
+     * Driver reports an emergency.
+     * Accepts either:
+     * - application/json (e.g. from mobile): type, description, latitude, longitude (no voice file).
+     * - multipart/form-data: type, description, latitude, longitude, optional voiceAudio file.
      */
-    @PostMapping("/api/driver/emergencies")
+    @PostMapping(value = "/api/driver/emergencies", consumes = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('DRIVER')")
-    public ResponseEntity<ReportEmergencyResponse> reportEmergency(
+    public ResponseEntity<?> reportEmergencyJson(
+            @Valid @RequestBody ReportEmergencyJsonRequest jsonRequest,
+            HttpServletRequest httpRequest) {
+        try {
+            Long driverId = getCurrentUserId(httpRequest);
+            // At least description required when no voice file
+            if (jsonRequest.getDescription() == null || jsonRequest.getDescription().trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(SimpleApiResponse.error("Description is required when not sending a voice recording."));
+            }
+            ReportEmergencyRequest request = new ReportEmergencyRequest();
+            request.setType(jsonRequest.getType());
+            request.setDescription(jsonRequest.getDescription());
+            request.setLatitude(jsonRequest.getLatitude());
+            request.setLongitude(jsonRequest.getLongitude());
+            request.setVoiceAudio(null);
+            ReportEmergencyResponse response = emergencyService.reportEmergency(request, driverId);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(SimpleApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @PostMapping(value = "/api/driver/emergencies", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('DRIVER')")
+    public ResponseEntity<?> reportEmergencyMultipart(
             @ModelAttribute ReportEmergencyRequest request,
             HttpServletRequest httpRequest) {
         try {
@@ -40,7 +68,7 @@ public class EmergencyController {
             ReportEmergencyResponse response = emergencyService.reportEmergency(request, driverId);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(SimpleApiResponse.error(e.getMessage()));
         }
     }
 

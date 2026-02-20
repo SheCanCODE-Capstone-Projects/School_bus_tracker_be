@@ -8,6 +8,7 @@ import org.example.school_bus_tracker_be.DTO.DriverRegisterRequest;
 import org.example.school_bus_tracker_be.DTO.ParentRegisterRequest;
 import org.example.school_bus_tracker_be.DTO.AdminRegisterRequest;
 import org.example.school_bus_tracker_be.DTO.AdminAddDriverRequest;
+import org.example.school_bus_tracker_be.DTO.AdminAddParentRequest;
 import org.example.school_bus_tracker_be.DTO.AdminAddStudentRequest;
 import org.example.school_bus_tracker_be.Model.User;
 import org.example.school_bus_tracker_be.Model.Student;
@@ -24,6 +25,8 @@ public interface AuthService {
     AuthResponse registerAdmin(AdminRegisterRequest request);
 
     Driver addDriverByAdmin(AdminAddDriverRequest request, Long adminId);
+
+    User addParentByAdmin(AdminAddParentRequest request, Long adminId);
 
     Student addStudentByAdmin(AdminAddStudentRequest request, Long adminId);
 

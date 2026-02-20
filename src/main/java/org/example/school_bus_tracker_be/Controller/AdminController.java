@@ -3,7 +3,9 @@ package org.example.school_bus_tracker_be.Controller;
 import org.example.school_bus_tracker_be.Config.JwtTokenProvider;
 import org.example.school_bus_tracker_be.DTO.AdminRegisterRequest;
 import org.example.school_bus_tracker_be.DTO.AdminAddDriverRequest;
+import org.example.school_bus_tracker_be.DTO.AdminAddParentRequest;
 import org.example.school_bus_tracker_be.DTO.AdminAddStudentRequest;
+import org.example.school_bus_tracker_be.DTO.ParentResponse;
 import org.example.school_bus_tracker_be.DTO.AssignBusToDriverRequest;
 import org.example.school_bus_tracker_be.DTO.AssignStudentsToBusRequest;
 import org.example.school_bus_tracker_be.DTO.ApiResponse;
@@ -82,6 +84,29 @@ public class AdminController {
             driver.getLicenseNumber(),
             driver.getAssignedBus() != null ? driver.getAssignedBus().getId() : null
         );
+    }
+
+    @PostMapping("/add-parent")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<ParentResponse>> addParent(@Valid @RequestBody AdminAddParentRequest request, HttpServletRequest httpRequest) {
+        try {
+            Long adminId = getCurrentUserId(httpRequest);
+            User parent = authService.addParentByAdmin(request, adminId);
+            ParentResponse response = new ParentResponse(
+                    parent.getId(),
+                    parent.getName(),
+                    parent.getEmail(),
+                    parent.getPhone(),
+                    parent.getSchool().getId(),
+                    parent.getSchool().getName()
+            );
+            String message = (parent.getPassword() == null || parent.getPassword().isEmpty())
+                    ? "Parent added successfully. They have no password yet and must use the password-reset flow to set one before first login."
+                    : "Parent added successfully.";
+            return ResponseEntity.ok(ApiResponse.success(message, response));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
     }
 
     @PostMapping("/add-student")

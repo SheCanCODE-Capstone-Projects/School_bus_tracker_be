@@ -23,7 +23,8 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
+    /** Null when admin adds a parent; parent must set password via password-reset flow. */
+    @Column(nullable = true)
     private String password;
 
     @Column(nullable = false, unique = true)

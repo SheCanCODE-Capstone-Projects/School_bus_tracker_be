@@ -7,6 +7,7 @@ import org.example.school_bus_tracker_be.DTO.DriverRegisterRequest;
 import org.example.school_bus_tracker_be.DTO.ParentRegisterRequest;
 import org.example.school_bus_tracker_be.DTO.AdminRegisterRequest;
 import org.example.school_bus_tracker_be.DTO.AdminAddDriverRequest;
+import org.example.school_bus_tracker_be.DTO.AdminAddParentRequest;
 import org.example.school_bus_tracker_be.DTO.AdminAddStudentRequest;
 import org.example.school_bus_tracker_be.DTO.ChildInfo;
 import org.example.school_bus_tracker_be.Dtos.auth.AuthRequest;
@@ -281,6 +282,90 @@ public class AuthServiceImpl implements AuthService {
         driverRepository.save(driver);
 
         return driver;
+    }
+
+    // ADMIN ADD PARENT (same request shape as parent registration; password optional; can include children)
+    @Override
+    @Transactional
+    public User addParentByAdmin(AdminAddParentRequest request, Long adminId) {
+        User admin = userRepository.findById(adminId)
+                .orElseThrow(() -> new RuntimeException("Admin not found"));
+
+        if (!admin.getRole().equals(Role.ADMIN)) {
+            throw new RuntimeException("Only admins can add parents");
+        }
+
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException("Email already exists");
+        }
+        if (userRepository.existsByPhone(request.getPhone())) {
+            throw new RuntimeException("Phone number already exists");
+        }
+
+        School school = admin.getSchool();
+        if (request.getSchoolId() != null && request.getSchoolId() > 0) {
+            school = schoolRepository.findById(request.getSchoolId())
+                    .orElseThrow(() -> new RuntimeException("School not found"));
+        }
+
+        String encodedPassword = null;
+        if (request.getPassword() != null && !request.getPassword().trim().isEmpty()) {
+            encodedPassword = passwordEncoder.encode(request.getPassword());
+        }
+
+        User parent = new User(
+                school,
+                request.getName(),
+                request.getEmail(),
+                encodedPassword,
+                request.getPhone(),
+                Role.PARENT
+        );
+
+        parent = userRepository.save(parent);
+
+        // Create children if provided (same logic as parent self-registration)
+        if (request.getChildren() != null && !request.getChildren().isEmpty()) {
+            for (ChildInfo child : request.getChildren()) {
+                if (child.getBusStopId() == null) {
+                    throw new RuntimeException("Bus stop ID is required for child: " + child.getFullName());
+                }
+                BusStop busStop = busStopRepository
+                        .findById(child.getBusStopId())
+                        .orElseThrow(() -> new RuntimeException(
+                                "Bus stop not found with ID: " + child.getBusStopId() +
+                                        " for child: " + child.getFullName() + ". Please provide a valid bus stop ID."));
+                if (!busStop.getSchool().getId().equals(school.getId())) {
+                    throw new RuntimeException(
+                            "Bus stop with ID: " + child.getBusStopId() +
+                                    " does not belong to school ID: " + school.getId() +
+                                    " for child: " + child.getFullName());
+                }
+
+                Student.Gender genderEnum = null;
+                if (child.getGender() != null && !child.getGender().isEmpty()) {
+                    try {
+                        genderEnum = Student.Gender.valueOf(child.getGender().toUpperCase());
+                    } catch (IllegalArgumentException e) {
+                        // ignore invalid gender
+                    }
+                }
+
+                Student student = new Student(
+                        school,
+                        child.getFullName(),
+                        child.getAge(),
+                        genderEnum,
+                        request.getName(),
+                        request.getPhone(),
+                        request.getHomeAddress() != null ? request.getHomeAddress() : ""
+                );
+                student.setBusStop(busStop);
+                studentRepository.save(student);
+            }
+        }
+
+        return parent;
     }
 
     // ADMIN ADD STUDENT

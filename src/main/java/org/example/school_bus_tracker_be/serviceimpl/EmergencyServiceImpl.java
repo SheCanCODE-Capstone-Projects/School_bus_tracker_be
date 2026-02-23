@@ -272,18 +272,22 @@ public class EmergencyServiceImpl implements EmergencyService {
 
     @Override
     public EmergencyResponse getDriverEmergencyById(Long emergencyId, Long driverId) {
+        if (driverId == null) {
+            throw new RuntimeException("Invalid token: user id missing");
+        }
         Emergency emergency = emergencyRepository.findById(emergencyId)
                 .orElseThrow(() -> new RuntimeException("Emergency not found"));
 
-        User driver = userRepository.findById(driverId)
+        User driverUser = userRepository.findById(driverId)
                 .orElseThrow(() -> new RuntimeException("Driver not found"));
 
-        Driver driverEntity = driverRepository.findByEmail(driver.getEmail())
-                .orElseThrow(() -> new RuntimeException("Driver entity not found"));
+        if (!driverUser.getRole().equals(Role.DRIVER)) {
+            throw new RuntimeException("User is not a driver");
+        }
 
-        if (driverEntity.getAssignedBus() == null || 
-            !emergency.getBus().getId().equals(driverEntity.getAssignedBus().getId())) {
-            throw new RuntimeException("Access denied: Emergency does not belong to your bus");
+        // Allow access if this emergency was created by this driver (emergency.driver_id = user id from token)
+        if (emergency.getDriver() == null || !emergency.getDriver().getId().equals(driverId)) {
+            throw new RuntimeException("Access denied: Emergency does not belong to you");
         }
 
         return new EmergencyResponse(emergency);

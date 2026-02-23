@@ -90,11 +90,11 @@ public class EmergencyController {
 
     /**
      * GET /driver/emergencies/{id}
-     * Driver views emergency details
+     * Driver views emergency details. Driver is resolved from users table (role DRIVER); access allowed only if emergency.driver_id equals driver's user id.
      */
     @GetMapping("/api/driver/emergencies/{id}")
     @PreAuthorize("hasRole('DRIVER')")
-    public ResponseEntity<EmergencyResponse> getDriverEmergencyById(
+    public ResponseEntity<?> getDriverEmergencyById(
             @PathVariable Long id,
             HttpServletRequest httpRequest) {
         try {
@@ -102,7 +102,7 @@ public class EmergencyController {
             EmergencyResponse emergency = emergencyService.getDriverEmergencyById(id, driverId);
             return ResponseEntity.ok(emergency);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(SimpleApiResponse.error(e.getMessage()));
         }
     }
 
@@ -179,6 +179,21 @@ public class EmergencyController {
             Long adminId = getCurrentUserId(httpRequest);
             emergencyService.resolveEmergency(id, request, adminId);
             return ResponseEntity.ok(SimpleApiResponse.success("Emergency resolved successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(SimpleApiResponse.error(e.getMessage()));
+        }
+    }
+
+    /**
+     * GET /admin/drivers/{driverId}/emergencies
+     * Admin gets all emergencies created by a specific driver (driverId = User id of the driver).
+     */
+    @GetMapping("/api/admin/drivers/{driverId}/emergencies")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> getDriverEmergenciesByAdmin(@PathVariable Long driverId) {
+        try {
+            List<EmergencyResponse> emergencies = emergencyService.getDriverEmergencies(driverId);
+            return ResponseEntity.ok(emergencies);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(SimpleApiResponse.error(e.getMessage()));
         }

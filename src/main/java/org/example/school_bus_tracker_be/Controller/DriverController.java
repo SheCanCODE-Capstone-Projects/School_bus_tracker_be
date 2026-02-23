@@ -56,12 +56,17 @@ public class DriverController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Get driver by ID", description = "Retrieve a specific driver by their ID")
+    @Operation(summary = "Get driver by ID", description = "Retrieve a driver by their User ID (from users table with role DRIVER)")
     @SuppressWarnings("null")
     public ResponseEntity<ApiResponse<DriverResponse>> getDriverById(@PathVariable Long id) {
         try {
-            Driver driver = driverRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Driver not found"));
+            User driverUser = userRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Driver not found"));
+            if (!driverUser.getRole().equals(Role.DRIVER)) {
+                throw new RuntimeException("User is not a driver");
+            }
+            Driver driver = driverRepository.findByEmail(driverUser.getEmail())
+                    .orElseThrow(() -> new RuntimeException("Driver record not found for this user"));
             return ResponseEntity.ok(ApiResponse.success("Driver retrieved successfully", convertToResponse(driver)));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));

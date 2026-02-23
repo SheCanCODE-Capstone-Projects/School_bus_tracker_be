@@ -31,13 +31,15 @@ public class AdminActionsController {
     private final BusStopRepository busStopRepository;
     private final SchoolRepository schoolRepository;
     private final DriverRepository driverRepository;
+    private final NotificationRepository notificationRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
 
     public AdminActionsController(UserRepository userRepository, StudentRepository studentRepository,
                                 BusRepository busRepository, BusStopRepository busStopRepository,
                                 SchoolRepository schoolRepository,
-                                DriverRepository driverRepository, JwtTokenProvider jwtTokenProvider, 
+                                DriverRepository driverRepository, NotificationRepository notificationRepository,
+                                JwtTokenProvider jwtTokenProvider,
                                 PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.studentRepository = studentRepository;
@@ -45,6 +47,7 @@ public class AdminActionsController {
         this.busStopRepository = busStopRepository;
         this.schoolRepository = schoolRepository;
         this.driverRepository = driverRepository;
+        this.notificationRepository = notificationRepository;
         this.jwtTokenProvider = jwtTokenProvider;
         this.passwordEncoder = passwordEncoder;
     }
@@ -267,6 +270,36 @@ public class AdminActionsController {
         }
     }
 
+    @PutMapping("/parents/{id}")
+    public ResponseEntity<ApiResponse<User>> updateParent(@PathVariable Long id, @RequestBody UpdateUserRequest request) {
+        try {
+            User parent = userRepository.findById(id).orElseThrow(() -> new RuntimeException("Parent not found"));
+            if (!parent.getRole().equals(Role.PARENT)) {
+                throw new RuntimeException("User is not a parent");
+            }
+            if (request.getName() != null && !request.getName().isBlank()) parent.setName(request.getName());
+            if (request.getEmail() != null && !request.getEmail().isBlank()) {
+                if (userRepository.findByEmail(request.getEmail()).filter(u -> !u.getId().equals(id)).isPresent()) {
+                    throw new RuntimeException("Email already in use by another user");
+                }
+                parent.setEmail(request.getEmail());
+            }
+            if (request.getPhone() != null && !request.getPhone().isBlank()) {
+                if (userRepository.findByPhone(request.getPhone()).filter(u -> !u.getId().equals(id)).isPresent()) {
+                    throw new RuntimeException("Phone already in use by another user");
+                }
+                parent.setPhone(request.getPhone());
+            }
+            if (request.getPassword() != null && !request.getPassword().isBlank()) {
+                parent.setPassword(passwordEncoder.encode(request.getPassword()));
+            }
+            userRepository.save(parent);
+            return ResponseEntity.ok(ApiResponse.success("Parent updated successfully", parent));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
     @DeleteMapping("/parents/{id}")
     public ResponseEntity<ApiResponse<String>> deleteParent(@PathVariable Long id) {
         try {
@@ -274,6 +307,8 @@ public class AdminActionsController {
             if (!parent.getRole().equals(Role.PARENT)) {
                 throw new RuntimeException("User is not a parent");
             }
+            notificationRepository.deleteByUserId(id);
+            notificationRepository.flush();
             userRepository.delete(parent);
             return ResponseEntity.ok(ApiResponse.success("Parent deleted successfully", "Parent removed"));
         } catch (Exception e) {

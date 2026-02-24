@@ -21,7 +21,10 @@ import org.example.school_bus_tracker_be.Model.Bus;
 import org.example.school_bus_tracker_be.Enum.Role;
 import org.example.school_bus_tracker_be.Repository.UserRepository;
 import org.example.school_bus_tracker_be.Repository.StudentRepository;
+import org.example.school_bus_tracker_be.Repository.DriverRepository;
 import org.example.school_bus_tracker_be.Service.AuthService;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.example.school_bus_tracker_be.Service.BusService;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
@@ -41,14 +44,19 @@ public class AdminController {
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
     private final StudentRepository studentRepository;
+    private final DriverRepository driverRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public AdminController(AuthService authService, BusService busService, JwtTokenProvider jwtTokenProvider,
-                          UserRepository userRepository, StudentRepository studentRepository) {
+                          UserRepository userRepository, StudentRepository studentRepository,
+                          DriverRepository driverRepository, PasswordEncoder passwordEncoder) {
         this.authService = authService;
         this.busService = busService;
         this.jwtTokenProvider = jwtTokenProvider;
         this.userRepository = userRepository;
         this.studentRepository = studentRepository;
+        this.driverRepository = driverRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @PostMapping("/register")
@@ -73,7 +81,76 @@ public class AdminController {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }
-    
+
+    /**
+     * PUT /api/admin/update-driver/{id}
+     * Update driver by User id (users table, role DRIVER). Updates both User and Driver records.
+     * Request body: email, name, phone_number, license_number (all optional).
+     */
+    @PutMapping("/update-driver/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<DriverResponse>> updateDriver(
+            @PathVariable Long id,
+            @RequestBody AdminUpdateDriverRequest request,
+            HttpServletRequest httpRequest) {
+        try {
+            User driverUser = userRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Driver not found"));
+            if (!driverUser.getRole().equals(Role.DRIVER)) {
+                throw new RuntimeException("User is not a driver");
+            }
+            Driver driver = driverRepository.findByEmail(driverUser.getEmail())
+                    .orElseThrow(() -> new RuntimeException("Driver record not found for this user"));
+
+            if (request.getName() != null && !request.getName().isBlank()) {
+                driverUser.setName(request.getName().trim());
+                driver.setFullName(request.getName().trim());
+            }
+            if (request.getEmail() != null && !request.getEmail().isBlank()) {
+                String newEmail = request.getEmail().trim();
+                if (!newEmail.equals(driverUser.getEmail())) {
+                    if (userRepository.existsByEmail(newEmail)) {
+                        throw new RuntimeException("Another user already has this email");
+                    }
+                    if (driverRepository.existsByEmail(newEmail)) {
+                        throw new RuntimeException("Another driver already has this email");
+                    }
+                }
+                driverUser.setEmail(newEmail);
+                driver.setEmail(newEmail);
+            }
+            if (request.getPhoneNumber() != null && !request.getPhoneNumber().isBlank()) {
+                String newPhone = request.getPhoneNumber().trim();
+                if (!newPhone.equals(driverUser.getPhone())) {
+                    if (userRepository.existsByPhone(newPhone)) {
+                        throw new RuntimeException("Another user already has this phone number");
+                    }
+                    if (driverRepository.existsByPhoneNumber(newPhone)) {
+                        throw new RuntimeException("Another driver already has this phone number");
+                    }
+                }
+                driverUser.setPhone(newPhone);
+                driver.setPhoneNumber(newPhone);
+            }
+            if (request.getLicenseNumber() != null && !request.getLicenseNumber().isBlank()) {
+                String newLicense = request.getLicenseNumber().trim();
+                if (!newLicense.equals(driver.getLicenseNumber()) && driverRepository.existsByLicenseNumber(newLicense)) {
+                    throw new RuntimeException("Another driver already has this license number");
+                }
+                driver.setLicenseNumber(newLicense);
+            }
+            if (request.getPassword() != null && !request.getPassword().isEmpty()) {
+                driverUser.setPassword(passwordEncoder.encode(request.getPassword()));
+            }
+
+            userRepository.save(driverUser);
+            driverRepository.save(driver);
+            return ResponseEntity.ok(ApiResponse.success("Driver updated successfully", convertToDriverResponse(driver)));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
     private DriverResponse convertToDriverResponse(Driver driver) {
         return new DriverResponse(
             driver.getId(),
@@ -262,5 +339,27 @@ public class AdminController {
             return jwtTokenProvider.getUserIdFromToken(token);
         }
         throw new RuntimeException("No valid token found");
+    }
+
+    /** Request body for PUT /api/admin/update-driver/{id}. Supports snake_case (phone_number, license_number). */
+    public static class AdminUpdateDriverRequest {
+        private String name;
+        private String email;
+        @JsonProperty("phone_number")
+        private String phoneNumber;
+        @JsonProperty("license_number")
+        private String licenseNumber;
+        private String password;
+
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
+        public String getEmail() { return email; }
+        public void setEmail(String email) { this.email = email; }
+        public String getPhoneNumber() { return phoneNumber; }
+        public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
+        public String getLicenseNumber() { return licenseNumber; }
+        public void setLicenseNumber(String licenseNumber) { this.licenseNumber = licenseNumber; }
+        public String getPassword() { return password; }
+        public void setPassword(String password) { this.password = password; }
     }
 }

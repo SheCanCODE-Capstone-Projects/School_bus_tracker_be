@@ -18,7 +18,8 @@ public class CorsConfig {
 
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:3000",
-                "https://localhost:3000"
+                "https://localhost:3000",
+                "https://school-bus-tracker-fe-827c.vercel.app/"
                 // add production frontend URL later
         ));
 

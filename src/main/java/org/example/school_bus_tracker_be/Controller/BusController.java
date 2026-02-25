@@ -4,6 +4,7 @@ import org.example.school_bus_tracker_be.DTO.ApiResponse;
 import org.example.school_bus_tracker_be.DTO.UpdateBusStatusRequest;
 import org.example.school_bus_tracker_be.Dtos.bus.CreateBusRequest;
 import org.example.school_bus_tracker_be.Dtos.bus.BusResponse;
+import org.example.school_bus_tracker_be.Dtos.bus.UpdateBusRequest;
 import org.example.school_bus_tracker_be.Model.Bus;
 import org.example.school_bus_tracker_be.Model.Driver;
 import org.example.school_bus_tracker_be.Model.School;
@@ -97,30 +98,70 @@ public class BusController {
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Update bus", description = "Update an existing bus")
+    @Operation(summary = "Update bus", description = "Update an existing bus (Edit Bus form: bus name, bus number, school, assign driver, status)")
     @SuppressWarnings("null")
     public ResponseEntity<ApiResponse<BusResponse>> updateBus(
             @PathVariable Long id,
-            @Valid @RequestBody CreateBusRequest request) {
+            @RequestBody UpdateBusRequest request) {
         try {
             Bus bus = busRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Bus not found"));
-            
-            bus.setBusName(request.getBusName());
-            bus.setBusNumber(request.getBusNumber());
-            bus.setCapacity(request.getCapacity());
-            bus.setRoute(request.getRoute());
-            
-            // Set status
-            try {
-                bus.setStatus(Bus.Status.valueOf(request.getStatus()));
-            } catch (IllegalArgumentException e) {
-                bus.setStatus(Bus.Status.ACTIVE);
+
+            if (request.getBusName() != null && !request.getBusName().isBlank()) {
+                bus.setBusName(request.getBusName().trim());
             }
-            
-            // Note: Driver assignment should be done via PATCH /api/admin/assign-bus-to-driver
-            // We don't remove existing driver assignment here - use the dedicated endpoint
-            
+            if (request.getBusNumber() != null && !request.getBusNumber().isBlank()) {
+                bus.setBusNumber(request.getBusNumber().trim());
+            }
+            if (request.getSchoolId() != null) {
+                School school = schoolRepository.findById(request.getSchoolId())
+                    .orElseThrow(() -> new RuntimeException("School not found"));
+                bus.setSchool(school);
+            }
+            if (request.getCapacity() != null) {
+                bus.setCapacity(request.getCapacity());
+            }
+            if (request.getRoute() != null) {
+                bus.setRoute(request.getRoute());
+            }
+            if (request.getStatus() != null && !request.getStatus().isBlank()) {
+                try {
+                    bus.setStatus(Bus.Status.valueOf(request.getStatus().trim().toUpperCase()));
+                } catch (IllegalArgumentException e) {
+                    return ResponseEntity.badRequest().body(
+                        ApiResponse.error("Invalid status. Use: ACTIVE, INACTIVE, MAINTENANCE, ON_ROUTE"));
+                }
+            }
+
+            // Unassign driver if requested
+            if (Boolean.TRUE.equals(request.getUnassignDriver()) && bus.getAssignedDriver() != null) {
+                Driver prev = bus.getAssignedDriver();
+                prev.setAssignedBus(null);
+                driverRepository.save(prev);
+                bus.setAssignedDriver(null);
+            }
+            // Assign or reassign driver: assignedDriverId is Driver table id
+            else if (request.getAssignedDriverId() != null) {
+                Driver newDriver = driverRepository.findById(request.getAssignedDriverId())
+                    .orElseThrow(() -> new RuntimeException("Driver not found with ID: " + request.getAssignedDriverId()));
+                if (!newDriver.getSchool().getId().equals(bus.getSchool().getId())) {
+                    return ResponseEntity.badRequest().body(ApiResponse.error("Driver and bus must belong to the same school"));
+                }
+                if (bus.getAssignedDriver() != null) {
+                    Driver prev = bus.getAssignedDriver();
+                    prev.setAssignedBus(null);
+                    driverRepository.save(prev);
+                }
+                if (newDriver.getAssignedBus() != null && !newDriver.getAssignedBus().getId().equals(bus.getId())) {
+                    Bus prevBus = newDriver.getAssignedBus();
+                    prevBus.setAssignedDriver(null);
+                    busRepository.save(prevBus);
+                }
+                bus.setAssignedDriver(newDriver);
+                newDriver.setAssignedBus(bus);
+                driverRepository.save(newDriver);
+            }
+
             Bus updatedBus = busRepository.save(bus);
             return ResponseEntity.ok(ApiResponse.success("Bus updated successfully", convertToResponse(updatedBus)));
         } catch (Exception e) {

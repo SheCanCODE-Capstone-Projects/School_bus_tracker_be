@@ -5,6 +5,7 @@ import org.example.school_bus_tracker_be.DTO.AdminAddStudentRequest;
 import org.example.school_bus_tracker_be.DTO.ApiResponse;
 import org.example.school_bus_tracker_be.Dtos.bus.CreateBusRequest;
 import org.example.school_bus_tracker_be.Dtos.bus.BusResponse;
+import org.example.school_bus_tracker_be.Dtos.bus.UpdateBusRequest;
 import org.example.school_bus_tracker_be.Dtos.student.StudentResponse;
 import org.example.school_bus_tracker_be.Model.*;
 import org.example.school_bus_tracker_be.Repository.*;
@@ -359,26 +360,53 @@ public class AdminActionsController {
     }
 
     @PutMapping("/buses/{id}")
-    public ResponseEntity<ApiResponse<BusResponse>> updateBus(@PathVariable Long id, @RequestBody CreateBusRequest request) {
+    public ResponseEntity<ApiResponse<BusResponse>> updateBus(@PathVariable Long id, @RequestBody UpdateBusRequest request) {
         try {
             Bus bus = busRepository.findById(id).orElseThrow(() -> new RuntimeException("Bus not found"));
-            
-            if (request.getBusName() != null) bus.setBusName(request.getBusName());
-            if (request.getBusNumber() != null) bus.setBusNumber(request.getBusNumber());
+
+            if (request.getBusName() != null && !request.getBusName().isBlank()) bus.setBusName(request.getBusName().trim());
+            if (request.getBusNumber() != null && !request.getBusNumber().isBlank()) bus.setBusNumber(request.getBusNumber().trim());
+            if (request.getSchoolId() != null) {
+                School school = schoolRepository.findById(request.getSchoolId())
+                    .orElseThrow(() -> new RuntimeException("School not found"));
+                bus.setSchool(school);
+            }
             if (request.getCapacity() != null) bus.setCapacity(request.getCapacity());
             if (request.getRoute() != null) bus.setRoute(request.getRoute());
-            
-            if (request.getStatus() != null) {
+            if (request.getStatus() != null && !request.getStatus().isBlank()) {
                 try {
-                    bus.setStatus(Bus.Status.valueOf(request.getStatus().toUpperCase()));
+                    bus.setStatus(Bus.Status.valueOf(request.getStatus().trim().toUpperCase()));
                 } catch (IllegalArgumentException e) {
-                    // Invalid status, keep existing status
+                    return ResponseEntity.badRequest().body(ApiResponse.error("Invalid status. Use: ACTIVE, INACTIVE, MAINTENANCE, ON_ROUTE"));
                 }
             }
-            
-            // Note: Driver assignment should be done via PATCH /api/admin/assign-bus-to-driver
-            // We don't remove existing driver assignment here - use the dedicated endpoint
-            
+
+            if (Boolean.TRUE.equals(request.getUnassignDriver()) && bus.getAssignedDriver() != null) {
+                Driver prev = bus.getAssignedDriver();
+                prev.setAssignedBus(null);
+                driverRepository.save(prev);
+                bus.setAssignedDriver(null);
+            } else if (request.getAssignedDriverId() != null) {
+                Driver newDriver = driverRepository.findById(request.getAssignedDriverId())
+                    .orElseThrow(() -> new RuntimeException("Driver not found with ID: " + request.getAssignedDriverId()));
+                if (!newDriver.getSchool().getId().equals(bus.getSchool().getId())) {
+                    return ResponseEntity.badRequest().body(ApiResponse.error("Driver and bus must belong to the same school"));
+                }
+                if (bus.getAssignedDriver() != null) {
+                    Driver prev = bus.getAssignedDriver();
+                    prev.setAssignedBus(null);
+                    driverRepository.save(prev);
+                }
+                if (newDriver.getAssignedBus() != null && !newDriver.getAssignedBus().getId().equals(bus.getId())) {
+                    Bus prevBus = newDriver.getAssignedBus();
+                    prevBus.setAssignedDriver(null);
+                    busRepository.save(prevBus);
+                }
+                bus.setAssignedDriver(newDriver);
+                newDriver.setAssignedBus(bus);
+                driverRepository.save(newDriver);
+            }
+
             Bus updatedBus = busRepository.save(bus);
             BusResponse busResponse = convertToBusResponse(updatedBus);
             return ResponseEntity.ok(ApiResponse.success("Bus updated successfully", busResponse));

@@ -1,15 +1,18 @@
 package org.example.school_bus_tracker_be.Controller;
 
 import org.example.school_bus_tracker_be.DTO.ApiResponse;
+import org.example.school_bus_tracker_be.Dtos.driver.DriverDetailResponse;
 import org.example.school_bus_tracker_be.Dtos.driver.DriverRequest;
 import org.example.school_bus_tracker_be.Dtos.driver.DriverResponse;
 import org.example.school_bus_tracker_be.Model.Driver;
 import org.example.school_bus_tracker_be.Model.Bus;
 import org.example.school_bus_tracker_be.Model.School;
+import org.example.school_bus_tracker_be.Model.Student;
 import org.example.school_bus_tracker_be.Model.User;
 import org.example.school_bus_tracker_be.Repository.DriverRepository;
 import org.example.school_bus_tracker_be.Repository.BusRepository;
 import org.example.school_bus_tracker_be.Repository.SchoolRepository;
+import org.example.school_bus_tracker_be.Repository.StudentRepository;
 import org.example.school_bus_tracker_be.Repository.UserRepository;
 import org.example.school_bus_tracker_be.Enum.Role;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,6 +21,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,15 +34,17 @@ public class DriverController {
     private final SchoolRepository schoolRepository;
     private final BusRepository busRepository;
     private final UserRepository userRepository;
+    private final StudentRepository studentRepository;
     private final PasswordEncoder passwordEncoder;
 
     public DriverController(DriverRepository driverRepository, SchoolRepository schoolRepository,
                           BusRepository busRepository, UserRepository userRepository,
-                          PasswordEncoder passwordEncoder) {
+                          StudentRepository studentRepository, PasswordEncoder passwordEncoder) {
         this.driverRepository = driverRepository;
         this.schoolRepository = schoolRepository;
         this.busRepository = busRepository;
         this.userRepository = userRepository;
+        this.studentRepository = studentRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -56,9 +62,9 @@ public class DriverController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Get driver by ID", description = "Retrieve a driver by their User ID (from users table with role DRIVER)")
+    @Operation(summary = "Get driver by ID", description = "Retrieve a driver by their User ID (from users table with role DRIVER). Includes full bus info and students on the bus.")
     @SuppressWarnings("null")
-    public ResponseEntity<ApiResponse<DriverResponse>> getDriverById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<DriverDetailResponse>> getDriverById(@PathVariable Long id) {
         try {
             User driverUser = userRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Driver not found"));
@@ -67,7 +73,8 @@ public class DriverController {
             }
             Driver driver = driverRepository.findByEmail(driverUser.getEmail())
                     .orElseThrow(() -> new RuntimeException("Driver record not found for this user"));
-            return ResponseEntity.ok(ApiResponse.success("Driver retrieved successfully", convertToResponse(driver)));
+            DriverDetailResponse detail = convertToDetailResponse(driver);
+            return ResponseEntity.ok(ApiResponse.success("Driver retrieved successfully", detail));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
@@ -226,6 +233,46 @@ public class DriverController {
             driver.getPhoneNumber(),
             driver.getLicenseNumber(),
             driver.getAssignedBus() != null ? driver.getAssignedBus().getId() : null
+        );
+    }
+
+    private DriverDetailResponse convertToDetailResponse(Driver driver) {
+        Long busId = driver.getAssignedBus() != null ? driver.getAssignedBus().getId() : null;
+        DriverDetailResponse.BusInfo busInfo = null;
+        List<DriverDetailResponse.StudentOnBusInfo> studentsOnBus = Collections.emptyList();
+
+        if (driver.getAssignedBus() != null) {
+            Bus bus = driver.getAssignedBus();
+            busInfo = new DriverDetailResponse.BusInfo(
+                bus.getId(),
+                bus.getBusName(),
+                bus.getBusNumber(),
+                bus.getRoute(),
+                bus.getCapacity(),
+                bus.getStatus() != null ? bus.getStatus().name() : null
+            );
+            List<Student> students = studentRepository.findByAssignedBusId(bus.getId());
+            studentsOnBus = students.stream()
+                .map(s -> new DriverDetailResponse.StudentOnBusInfo(
+                    s.getId(),
+                    s.getStudentName(),
+                    s.getParentName(),
+                    s.getParentPhone(),
+                    s.getAge()
+                ))
+                .collect(Collectors.toList());
+        }
+
+        return new DriverDetailResponse(
+            driver.getId(),
+            driver.getSchool().getId(),
+            driver.getFullName(),
+            driver.getEmail(),
+            driver.getPhoneNumber(),
+            driver.getLicenseNumber(),
+            busId,
+            busInfo,
+            studentsOnBus
         );
     }
 }

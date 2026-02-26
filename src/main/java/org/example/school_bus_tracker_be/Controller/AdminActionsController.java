@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
 import jakarta.servlet.http.HttpServletRequest;
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.Optional;
@@ -310,40 +311,43 @@ public class AdminActionsController {
             if (request.getPassword() != null && !request.getPassword().isBlank()) {
                 parent.setPassword(passwordEncoder.encode(request.getPassword()));
             }
+            if (parent.getSchool() == null) {
+                return ResponseEntity.badRequest().body(ApiResponse.error("Parent has no school assigned"));
+            }
+            Long schoolId = parent.getSchool().getId();
+
+            // Update children (students) first – so child name and assigned bus always apply (even when parent phone changed)
+            // Match by either old or new parent phone so we don't skip children when phone was just updated
+            if (request.getChildren() != null && !request.getChildren().isEmpty()) {
+                for (ChildUpdateItem item : request.getChildren()) {
+                    if (item.getStudentId() == null) continue;
+                    Student student = studentRepository.findById(item.getStudentId()).orElse(null);
+                    if (student == null) continue;
+                    boolean sameSchool = student.getSchool() != null && schoolId.equals(student.getSchool().getId());
+                    boolean isThisParentChild = sameSchool && (student.getParentPhone().equals(parent.getPhone()) || student.getParentPhone().equals(oldPhone));
+                    if (!isThisParentChild) continue;
+                    if (item.getStudentName() != null && !item.getStudentName().isBlank()) {
+                        student.setStudentName(item.getStudentName().trim());
+                    }
+                    if (item.getAssignedBusId() != null && item.getAssignedBusId() > 0) {
+                        Bus bus = busRepository.findById(item.getAssignedBusId()).orElse(null);
+                        student.setAssignedBus(bus);
+                    } else {
+                        student.setAssignedBus(null);
+                    }
+                    studentRepository.save(student);
+                }
+            }
+
             userRepository.save(parent);
 
             // If parent phone changed, update all their children's parent_phone and parent_name so they stay linked
             if (request.getPhone() != null && !request.getPhone().isBlank() && !parent.getPhone().equals(oldPhone)) {
-                List<Student> linked = studentRepository.findByParentPhoneAndSchoolId(oldPhone, parent.getSchool().getId());
+                List<Student> linked = studentRepository.findByParentPhoneAndSchoolId(oldPhone, schoolId);
                 for (Student s : linked) {
                     s.setParentPhone(parent.getPhone());
                     if (request.getName() != null && !request.getName().isBlank()) s.setParentName(parent.getName());
                     studentRepository.save(s);
-                }
-            }
-
-            // Update children (students) if provided – so "Edit Parent" can change child name and assigned bus
-            if (request.getChildren() != null && !request.getChildren().isEmpty()) {
-                String parentPhone = parent.getPhone();
-                Long schoolId = parent.getSchool().getId();
-                for (ChildUpdateItem item : request.getChildren()) {
-                    if (item.getStudentId() == null) continue;
-                    Student student = studentRepository.findById(item.getStudentId())
-                            .orElse(null);
-                    if (student == null) continue;
-                    if (!student.getParentPhone().equals(parentPhone) || !student.getSchool().getId().equals(schoolId)) {
-                        continue; // not this parent's child, skip
-                    }
-                    if (item.getStudentName() != null && !item.getStudentName().isBlank()) {
-                        student.setStudentName(item.getStudentName().trim());
-                    }
-                    if (item.getAssignedBusId() != null) {
-                        Bus bus = busRepository.findById(item.getAssignedBusId()).orElse(null);
-                        student.setAssignedBus(bus);
-                    } else {
-                        student.setAssignedBus(null); // explicit unassign
-                    }
-                    studentRepository.save(student);
                 }
             }
 
@@ -548,7 +552,8 @@ public class AdminActionsController {
         @JsonProperty("school_id")
         private Long schoolId;
         private String password;
-        /** Optional: update child/student info (name, assigned bus) when editing parent. */
+        /** Optional: update child/student info (name, assigned bus) when editing parent. Send as "children" or "students". */
+        @JsonAlias("students")
         private List<ChildUpdateItem> children;
 
         public String getName() { return name; }
@@ -567,13 +572,16 @@ public class AdminActionsController {
         public void setChildren(List<ChildUpdateItem> children) { this.children = children; }
     }
 
-    /** One child/student in the update-parent request. */
+    /** One child/student in the update-parent request. Accepts snake_case or camelCase from frontend. */
     public static class ChildUpdateItem {
         @JsonProperty("id")
+        @JsonAlias("studentId")
         private Long studentId;
         @JsonProperty("student_name")
+        @JsonAlias("studentName")
         private String studentName;
         @JsonProperty("assigned_bus_id")
+        @JsonAlias("assignedBusId")
         private Long assignedBusId;
 
         public Long getStudentId() { return studentId; }

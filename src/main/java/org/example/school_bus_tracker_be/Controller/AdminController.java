@@ -255,37 +255,34 @@ public class AdminController {
             Long adminId = getCurrentUserId(httpRequest);
             User admin = userRepository.findById(adminId)
                     .orElseThrow(() -> new RuntimeException("Admin not found"));
-            
+            if (admin.getSchool() == null) {
+                return ResponseEntity.badRequest().body(ApiResponse.error("Admin has no school assigned. Cannot list parents."));
+            }
             // Get all parents from the same school
             java.util.List<User> parents = userRepository.findBySchoolAndRole(admin.getSchool(), Role.PARENT);
-            
             java.util.List<ParentWithStudentsResponse> parentsWithStudents = new ArrayList<>();
-            
             for (User parent : parents) {
-                // Get students for this parent
+                Long schoolId = parent.getSchool() != null ? parent.getSchool().getId() : null;
+                String schoolName = parent.getSchool() != null ? parent.getSchool().getName() : null;
+                if (schoolId == null) continue; // skip parent with no school so students query is valid
                 java.util.List<Student> students = studentRepository.findByParentPhoneAndSchoolId(
                         parent.getPhone(),
-                        parent.getSchool().getId()
+                        schoolId
                 );
-                
-                // Convert students to StudentResponse with full details
                 java.util.List<org.example.school_bus_tracker_be.Dtos.student.StudentResponse> studentResponses = students.stream()
                         .map(this::convertStudentToResponse)
                         .collect(Collectors.toList());
-                
                 ParentWithStudentsResponse parentResponse = new ParentWithStudentsResponse(
                         parent.getId(),
                         parent.getName(),
                         parent.getEmail(),
                         parent.getPhone(),
-                        parent.getSchool().getId(),
-                        parent.getSchool().getName(),
+                        schoolId,
+                        schoolName,
                         studentResponses
                 );
-                
                 parentsWithStudents.add(parentResponse);
             }
-            
             return ResponseEntity.ok(ApiResponse.success("Parents with students retrieved successfully", parentsWithStudents));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));

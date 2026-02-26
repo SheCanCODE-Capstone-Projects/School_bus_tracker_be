@@ -133,14 +133,16 @@ public class ParentController {
                 parent.setPassword(passwordEncoder.encode(request.getPassword()));
             }
             userRepository.save(parent);
+            Long schoolId = parent.getSchool() != null ? parent.getSchool().getId() : null;
+            String schoolName = parent.getSchool() != null ? parent.getSchool().getName() : null;
             ParentResponse response = new ParentResponse(
                     parent.getId(),
                     parent.getName(),
                     parent.getEmail(),
                     parent.getPhone(),
                     parent.getHomeAddress(),
-                    parent.getSchool().getId(),
-                    parent.getSchool().getName()
+                    schoolId,
+                    schoolName
             );
             return ResponseEntity.ok(ApiResponse.success("Profile updated successfully", response));
         } catch (Exception e) {
@@ -159,6 +161,9 @@ public class ParentController {
             User parent = userRepository.findById(parentId).orElseThrow(() -> new RuntimeException("Parent not found"));
             if (!parent.getRole().equals(Role.PARENT)) {
                 return ResponseEntity.badRequest().body(ApiResponse.error("User is not a parent"));
+            }
+            if (parent.getSchool() == null) {
+                return ResponseEntity.badRequest().body(ApiResponse.error("Parent has no school assigned"));
             }
             // Remove parent–bus associations, delete children (and their bus assignments), then notifications, then user
             studentBusRepository.deleteByParent_Id(parentId);

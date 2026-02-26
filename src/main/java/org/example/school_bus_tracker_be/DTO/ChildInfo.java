@@ -1,22 +1,26 @@
 package org.example.school_bus_tracker_be.DTO;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ChildInfo {
-    
+
     @NotBlank
+    @JsonAlias("name")
     private String fullName;
-    
+
     @NotBlank
     private String studentNumber;
-    
+
     @NotNull
     private Integer age;
-    
+
     private String gender;
-    
-    @NotNull
+
+    /** Optional if parent request has busStopId (same for all children). */
     private Long busStopId;
 
     public String getFullName() { return fullName; }

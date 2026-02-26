@@ -160,23 +160,20 @@ public class AuthServiceImpl implements AuthService {
         // Create children if provided
         if (request.getChildren() != null && !request.getChildren().isEmpty()) {
             for (ChildInfo child : request.getChildren()) {
-                // Validate that busStopId exists and belongs to the same school
-                if (child.getBusStopId() == null) {
-                    throw new RuntimeException("Bus stop ID is required for child: " + child.getFullName());
+                Long busStopId = child.getBusStopId() != null ? child.getBusStopId() : request.getBusStopId();
+                if (busStopId == null) {
+                    throw new RuntimeException("Bus stop ID is required for child: " + child.getFullName() + ". Provide busStopId per child or once in request (busStopId).");
                 }
-                
                 BusStop busStop = busStopRepository
-                        .findById(child.getBusStopId())
+                        .findById(busStopId)
                         .orElseThrow(() -> new RuntimeException(
-                                "Bus stop not found with ID: " + child.getBusStopId() + 
-                                " for child: " + child.getFullName() + 
+                                "Bus stop not found with ID: " + busStopId +
+                                " for child: " + child.getFullName() +
                                 ". Please provide a valid bus stop ID."));
-                
-                // Verify bus stop belongs to the same school
                 if (!busStop.getSchool().getId().equals(school.getId())) {
                     throw new RuntimeException(
-                            "Bus stop with ID: " + child.getBusStopId() + 
-                            " does not belong to school ID: " + school.getId() + 
+                            "Bus stop with ID: " + busStopId +
+                            " does not belong to school ID: " + school.getId() +
                             " for child: " + child.getFullName());
                 }
 

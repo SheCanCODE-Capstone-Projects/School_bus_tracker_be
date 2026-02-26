@@ -12,4 +12,7 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface StudentBusRepository extends JpaRepository<ParentBus, Long> {
+
+    /** Remove all parent–bus associations for a given parent (e.g. when deleting parent). */
+    void deleteByParent_Id(Long parentId);
 }

@@ -28,27 +28,33 @@ public class AdminActionsController {
 
     private final UserRepository userRepository;
     private final StudentRepository studentRepository;
+    private final StudentBusRepository studentBusRepository;
     private final BusRepository busRepository;
     private final BusStopRepository busStopRepository;
     private final SchoolRepository schoolRepository;
     private final DriverRepository driverRepository;
     private final NotificationRepository notificationRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
 
     public AdminActionsController(UserRepository userRepository, StudentRepository studentRepository,
+                                StudentBusRepository studentBusRepository,
                                 BusRepository busRepository, BusStopRepository busStopRepository,
                                 SchoolRepository schoolRepository,
                                 DriverRepository driverRepository, NotificationRepository notificationRepository,
+                                PasswordResetTokenRepository passwordResetTokenRepository,
                                 JwtTokenProvider jwtTokenProvider,
                                 PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.studentRepository = studentRepository;
+        this.studentBusRepository = studentBusRepository;
         this.busRepository = busRepository;
         this.busStopRepository = busStopRepository;
         this.schoolRepository = schoolRepository;
         this.driverRepository = driverRepository;
         this.notificationRepository = notificationRepository;
+        this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.jwtTokenProvider = jwtTokenProvider;
         this.passwordEncoder = passwordEncoder;
     }
@@ -278,18 +284,27 @@ public class AdminActionsController {
             if (!parent.getRole().equals(Role.PARENT)) {
                 throw new RuntimeException("User is not a parent");
             }
-            if (request.getName() != null && !request.getName().isBlank()) parent.setName(request.getName());
+            if (request.getName() != null && !request.getName().isBlank()) parent.setName(request.getName().trim());
             if (request.getEmail() != null && !request.getEmail().isBlank()) {
-                if (userRepository.findByEmail(request.getEmail()).filter(u -> !u.getId().equals(id)).isPresent()) {
+                String newEmail = request.getEmail().trim();
+                if (userRepository.findByEmail(newEmail).filter(u -> !u.getId().equals(id)).isPresent()) {
                     throw new RuntimeException("Email already in use by another user");
                 }
-                parent.setEmail(request.getEmail());
+                parent.setEmail(newEmail);
             }
             if (request.getPhone() != null && !request.getPhone().isBlank()) {
-                if (userRepository.findByPhone(request.getPhone()).filter(u -> !u.getId().equals(id)).isPresent()) {
+                String newPhone = request.getPhone().trim();
+                if (userRepository.findByPhone(newPhone).filter(u -> !u.getId().equals(id)).isPresent()) {
                     throw new RuntimeException("Phone already in use by another user");
                 }
-                parent.setPhone(request.getPhone());
+                parent.setPhone(newPhone);
+            }
+            if (request.getHomeAddress() != null) {
+                parent.setHomeAddress(request.getHomeAddress().trim().isEmpty() ? null : request.getHomeAddress().trim());
+            }
+            if (request.getSchoolId() != null) {
+                parent.setSchool(schoolRepository.findById(request.getSchoolId())
+                        .orElseThrow(() -> new RuntimeException("School not found")));
             }
             if (request.getPassword() != null && !request.getPassword().isBlank()) {
                 parent.setPassword(passwordEncoder.encode(request.getPassword()));
@@ -308,8 +323,20 @@ public class AdminActionsController {
             if (!parent.getRole().equals(Role.PARENT)) {
                 throw new RuntimeException("User is not a parent");
             }
+            // 1. Remove all parent–bus associations (ParentBus)
+            studentBusRepository.deleteByParent_Id(id);
+            studentBusRepository.flush();
+            // 2. Delete all children (students) linked by parent phone + school (removes their bus assignment too)
+            List<Student> children = studentRepository.findByParentPhoneAndSchoolId(parent.getPhone(), parent.getSchool().getId());
+            for (Student student : children) {
+                studentRepository.delete(student);
+            }
+            studentRepository.flush();
+            // 3. Delete notifications and password-reset tokens for this parent
             notificationRepository.deleteByUserId(id);
+            passwordResetTokenRepository.deleteByUserId(id);
             notificationRepository.flush();
+            // 4. Delete the parent (user)
             userRepository.delete(parent);
             return ResponseEntity.ok(ApiResponse.success("Parent deleted successfully", "Parent removed"));
         } catch (Exception e) {
@@ -479,6 +506,10 @@ public class AdminActionsController {
         private String name;
         private String email;
         private String phone;
+        @JsonProperty("home_address")
+        private String homeAddress;
+        @JsonProperty("school_id")
+        private Long schoolId;
         private String password;
 
         public String getName() { return name; }
@@ -487,6 +518,10 @@ public class AdminActionsController {
         public void setEmail(String email) { this.email = email; }
         public String getPhone() { return phone; }
         public void setPhone(String phone) { this.phone = phone; }
+        public String getHomeAddress() { return homeAddress; }
+        public void setHomeAddress(String homeAddress) { this.homeAddress = homeAddress; }
+        public Long getSchoolId() { return schoolId; }
+        public void setSchoolId(Long schoolId) { this.schoolId = schoolId; }
         public String getPassword() { return password; }
         public void setPassword(String password) { this.password = password; }
     }

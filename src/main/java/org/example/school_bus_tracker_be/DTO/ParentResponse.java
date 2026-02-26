@@ -9,6 +9,7 @@ public class ParentResponse {
     private String name;
     private String email;
     private String phone;
+    private String homeAddress;
     private Long schoolId;
     private String schoolName;
 
@@ -19,6 +20,16 @@ public class ParentResponse {
         this.name = name;
         this.email = email;
         this.phone = phone;
+        this.schoolId = schoolId;
+        this.schoolName = schoolName;
+    }
+
+    public ParentResponse(Long id, String name, String email, String phone, String homeAddress, Long schoolId, String schoolName) {
+        this.id = id;
+        this.name = name;
+        this.email = email;
+        this.phone = phone;
+        this.homeAddress = homeAddress;
         this.schoolId = schoolId;
         this.schoolName = schoolName;
     }
@@ -34,6 +45,9 @@ public class ParentResponse {
 
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
+
+    public String getHomeAddress() { return homeAddress; }
+    public void setHomeAddress(String homeAddress) { this.homeAddress = homeAddress; }
 
     public Long getSchoolId() { return schoolId; }
     public void setSchoolId(Long schoolId) { this.schoolId = schoolId; }

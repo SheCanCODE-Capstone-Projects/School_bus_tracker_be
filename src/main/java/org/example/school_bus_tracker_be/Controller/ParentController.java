@@ -6,11 +6,20 @@ import org.example.school_bus_tracker_be.Config.JwtTokenProvider;
 import org.example.school_bus_tracker_be.DTO.*;
 import org.example.school_bus_tracker_be.Dtos.auth.AuthResponse;
 import org.example.school_bus_tracker_be.Dtos.student.StudentResponse;
+import org.example.school_bus_tracker_be.Enum.Role;
+import org.example.school_bus_tracker_be.Model.User;
+import org.example.school_bus_tracker_be.Model.Student;
+import org.example.school_bus_tracker_be.Repository.NotificationRepository;
+import org.example.school_bus_tracker_be.Repository.SchoolRepository;
+import org.example.school_bus_tracker_be.Repository.StudentBusRepository;
+import org.example.school_bus_tracker_be.Repository.StudentRepository;
+import org.example.school_bus_tracker_be.Repository.UserRepository;
 import org.example.school_bus_tracker_be.Service.NotificationService;
 import org.example.school_bus_tracker_be.Service.ParentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,11 +30,27 @@ public class ParentController {
     private final ParentService parentService;
     private final NotificationService notificationService;
     private final JwtTokenProvider jwtTokenProvider;
+    private final UserRepository userRepository;
+    private final NotificationRepository notificationRepository;
+    private final SchoolRepository schoolRepository;
+    private final StudentRepository studentRepository;
+    private final StudentBusRepository studentBusRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public ParentController(ParentService parentService, NotificationService notificationService, JwtTokenProvider jwtTokenProvider) {
+    public ParentController(ParentService parentService, NotificationService notificationService,
+                            JwtTokenProvider jwtTokenProvider, UserRepository userRepository,
+                            NotificationRepository notificationRepository, SchoolRepository schoolRepository,
+                            StudentRepository studentRepository, StudentBusRepository studentBusRepository,
+                            PasswordEncoder passwordEncoder) {
         this.parentService = parentService;
         this.notificationService = notificationService;
         this.jwtTokenProvider = jwtTokenProvider;
+        this.userRepository = userRepository;
+        this.notificationRepository = notificationRepository;
+        this.schoolRepository = schoolRepository;
+        this.studentRepository = studentRepository;
+        this.studentBusRepository = studentBusRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @PostMapping("/auth/register/parent")
@@ -66,6 +91,90 @@ public class ParentController {
     public ResponseEntity<NotificationResponse> markNotificationAsRead(@PathVariable Long id, HttpServletRequest request) {
         Long parentId = getCurrentUserId(request);
         return ResponseEntity.ok(notificationService.markAsRead(parentId, id));
+    }
+
+    /**
+     * PUT /api/parent/profile – parent edits their own profile (name, email, phone, password).
+     */
+    @PutMapping("/api/parent/profile")
+    @PreAuthorize("hasRole('PARENT')")
+    public ResponseEntity<ApiResponse<ParentResponse>> updateMyProfile(
+            @RequestBody UpdateParentProfileRequest request,
+            HttpServletRequest httpRequest) {
+        try {
+            Long parentId = getCurrentUserId(httpRequest);
+            User parent = userRepository.findById(parentId).orElseThrow(() -> new RuntimeException("Parent not found"));
+            if (!parent.getRole().equals(Role.PARENT)) {
+                return ResponseEntity.badRequest().body(ApiResponse.error("User is not a parent"));
+            }
+            if (request.getName() != null && !request.getName().isBlank()) parent.setName(request.getName().trim());
+            if (request.getEmail() != null && !request.getEmail().isBlank()) {
+                String newEmail = request.getEmail().trim();
+                if (userRepository.findByEmail(newEmail).filter(u -> !u.getId().equals(parentId)).isPresent()) {
+                    return ResponseEntity.badRequest().body(ApiResponse.error("Email already in use by another user"));
+                }
+                parent.setEmail(newEmail);
+            }
+            if (request.getPhone() != null && !request.getPhone().isBlank()) {
+                String newPhone = request.getPhone().trim();
+                if (userRepository.findByPhone(newPhone).filter(u -> !u.getId().equals(parentId)).isPresent()) {
+                    return ResponseEntity.badRequest().body(ApiResponse.error("Phone already in use by another user"));
+                }
+                parent.setPhone(newPhone);
+            }
+            if (request.getHomeAddress() != null) {
+                parent.setHomeAddress(request.getHomeAddress().trim().isEmpty() ? null : request.getHomeAddress().trim());
+            }
+            if (request.getSchoolId() != null) {
+                parent.setSchool(schoolRepository.findById(request.getSchoolId())
+                        .orElseThrow(() -> new RuntimeException("School not found")));
+            }
+            if (request.getPassword() != null && !request.getPassword().isBlank()) {
+                parent.setPassword(passwordEncoder.encode(request.getPassword()));
+            }
+            userRepository.save(parent);
+            ParentResponse response = new ParentResponse(
+                    parent.getId(),
+                    parent.getName(),
+                    parent.getEmail(),
+                    parent.getPhone(),
+                    parent.getHomeAddress(),
+                    parent.getSchool().getId(),
+                    parent.getSchool().getName()
+            );
+            return ResponseEntity.ok(ApiResponse.success("Profile updated successfully", response));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    /**
+     * DELETE /api/parent/profile – parent deletes their own account.
+     */
+    @DeleteMapping("/api/parent/profile")
+    @PreAuthorize("hasRole('PARENT')")
+    public ResponseEntity<ApiResponse<String>> deleteMyAccount(HttpServletRequest httpRequest) {
+        try {
+            Long parentId = getCurrentUserId(httpRequest);
+            User parent = userRepository.findById(parentId).orElseThrow(() -> new RuntimeException("Parent not found"));
+            if (!parent.getRole().equals(Role.PARENT)) {
+                return ResponseEntity.badRequest().body(ApiResponse.error("User is not a parent"));
+            }
+            // Remove parent–bus associations, delete children (and their bus assignments), then notifications, then user
+            studentBusRepository.deleteByParent_Id(parentId);
+            studentBusRepository.flush();
+            List<Student> children = studentRepository.findByParentPhoneAndSchoolId(parent.getPhone(), parent.getSchool().getId());
+            for (Student student : children) {
+                studentRepository.delete(student);
+            }
+            studentRepository.flush();
+            notificationRepository.deleteByUserId(parentId);
+            notificationRepository.flush();
+            userRepository.delete(parent);
+            return ResponseEntity.ok(ApiResponse.success("Account deleted successfully", null));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
     }
 
     private Long getCurrentUserId(HttpServletRequest request) {

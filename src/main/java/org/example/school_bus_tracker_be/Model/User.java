@@ -40,6 +40,10 @@ public class User {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    /** Home address (optional). Used for parent profile. */
+    @Column(name = "home_address")
+    private String homeAddress;
+
 
     // Constructors
     public User() {}
@@ -63,6 +67,7 @@ public class User {
     public Role getRole() { return role; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public String getHomeAddress() { return homeAddress; }
 
     // Setters
     public void setId(Long id) { this.id = id; }
@@ -74,6 +79,7 @@ public class User {
     public void setRole(Role role) { this.role = role; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public void setHomeAddress(String homeAddress) { this.homeAddress = homeAddress; }
 
     @PrePersist
     protected void onCreate() {

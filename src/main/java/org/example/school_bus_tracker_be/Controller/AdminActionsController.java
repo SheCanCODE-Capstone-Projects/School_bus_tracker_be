@@ -284,6 +284,7 @@ public class AdminActionsController {
             if (!parent.getRole().equals(Role.PARENT)) {
                 throw new RuntimeException("User is not a parent");
             }
+            String oldPhone = parent.getPhone();
             if (request.getName() != null && !request.getName().isBlank()) parent.setName(request.getName().trim());
             if (request.getEmail() != null && !request.getEmail().isBlank()) {
                 String newEmail = request.getEmail().trim();
@@ -310,6 +311,42 @@ public class AdminActionsController {
                 parent.setPassword(passwordEncoder.encode(request.getPassword()));
             }
             userRepository.save(parent);
+
+            // If parent phone changed, update all their children's parent_phone and parent_name so they stay linked
+            if (request.getPhone() != null && !request.getPhone().isBlank() && !parent.getPhone().equals(oldPhone)) {
+                List<Student> linked = studentRepository.findByParentPhoneAndSchoolId(oldPhone, parent.getSchool().getId());
+                for (Student s : linked) {
+                    s.setParentPhone(parent.getPhone());
+                    if (request.getName() != null && !request.getName().isBlank()) s.setParentName(parent.getName());
+                    studentRepository.save(s);
+                }
+            }
+
+            // Update children (students) if provided – so "Edit Parent" can change child name and assigned bus
+            if (request.getChildren() != null && !request.getChildren().isEmpty()) {
+                String parentPhone = parent.getPhone();
+                Long schoolId = parent.getSchool().getId();
+                for (ChildUpdateItem item : request.getChildren()) {
+                    if (item.getStudentId() == null) continue;
+                    Student student = studentRepository.findById(item.getStudentId())
+                            .orElse(null);
+                    if (student == null) continue;
+                    if (!student.getParentPhone().equals(parentPhone) || !student.getSchool().getId().equals(schoolId)) {
+                        continue; // not this parent's child, skip
+                    }
+                    if (item.getStudentName() != null && !item.getStudentName().isBlank()) {
+                        student.setStudentName(item.getStudentName().trim());
+                    }
+                    if (item.getAssignedBusId() != null) {
+                        Bus bus = busRepository.findById(item.getAssignedBusId()).orElse(null);
+                        student.setAssignedBus(bus);
+                    } else {
+                        student.setAssignedBus(null); // explicit unassign
+                    }
+                    studentRepository.save(student);
+                }
+            }
+
             return ResponseEntity.ok(ApiResponse.success("Parent updated successfully", parent));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
@@ -511,6 +548,8 @@ public class AdminActionsController {
         @JsonProperty("school_id")
         private Long schoolId;
         private String password;
+        /** Optional: update child/student info (name, assigned bus) when editing parent. */
+        private List<ChildUpdateItem> children;
 
         public String getName() { return name; }
         public void setName(String name) { this.name = name; }
@@ -524,6 +563,25 @@ public class AdminActionsController {
         public void setSchoolId(Long schoolId) { this.schoolId = schoolId; }
         public String getPassword() { return password; }
         public void setPassword(String password) { this.password = password; }
+        public List<ChildUpdateItem> getChildren() { return children; }
+        public void setChildren(List<ChildUpdateItem> children) { this.children = children; }
+    }
+
+    /** One child/student in the update-parent request. */
+    public static class ChildUpdateItem {
+        @JsonProperty("id")
+        private Long studentId;
+        @JsonProperty("student_name")
+        private String studentName;
+        @JsonProperty("assigned_bus_id")
+        private Long assignedBusId;
+
+        public Long getStudentId() { return studentId; }
+        public void setStudentId(Long studentId) { this.studentId = studentId; }
+        public String getStudentName() { return studentName; }
+        public void setStudentName(String studentName) { this.studentName = studentName; }
+        public Long getAssignedBusId() { return assignedBusId; }
+        public void setAssignedBusId(Long assignedBusId) { this.assignedBusId = assignedBusId; }
     }
 
     public static class UpdateStudentRequest {

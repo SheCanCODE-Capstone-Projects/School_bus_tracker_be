@@ -33,5 +33,4 @@ build/
 .gitignore
 branch_structure.json
 node_modules
-.env
-.vscode/
+config.bat

@@ -15,7 +15,6 @@ target/
 .env
 
 ### IntelliJ IDEA ###
-temp_auto_push.bat
 .idea
 *.iws
 *.iml
@@ -34,3 +33,4 @@ build/
 ### VS Code ###
 .gitignore
 branch_structure.json
+.vscode/
